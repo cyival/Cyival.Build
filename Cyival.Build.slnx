@@ -1,0 +1,5 @@
+﻿<Solution>
+  <Project Path="Cyival.Build.Cli\Cyival.Build.Cli.csproj" Type="Classic C#" />
+  <Project Path="Cyival.Build.Tests\Cyival.Build.Tests.csproj" Type="Classic C#" />
+  <Project Path="Cyival.Build\Cyival.Build.csproj" Type="Classic C#" />
+</Solution>

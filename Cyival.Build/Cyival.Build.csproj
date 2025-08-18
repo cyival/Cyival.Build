@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Authors>Cyival Games</Authors>
+        <Copyright>Copyright © 2025 Cyival Games</Copyright>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Tomlyn" Version="0.19.0" />
+    </ItemGroup>
+
+</Project>
