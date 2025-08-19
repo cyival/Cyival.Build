@@ -1,0 +1,7 @@
+minimal-version = 0.1
+
+[build.godot]
+version = "4.2"
+
+[targets.dodge]
+path = "dodge_the_creeps"
