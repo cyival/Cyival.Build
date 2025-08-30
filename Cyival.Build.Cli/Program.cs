@@ -1,14 +1,17 @@
 ﻿using Cyival.Build;
+using Cyival.Build.Cli.Command;
 using Microsoft.Extensions.Logging;
+using Spectre.Console;
 using Velopack;
+using Spectre.Console.Cli;
 
 VelopackApp.Build().Run();
 
-Console.WriteLine("Hello, World!");
+var version = typeof(BuildApp).Assembly.GetName().Version;
 
-#if DEBUG
-BuildApp.LoggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-#endif
+AnsiConsole.MarkupLine($"[yellow]Cyival.Build[/] [dim]v{version}[/]\n");
 
-using var app = new BuildApp();
-app.LoadPlugins();
+var app = new CommandApp<BuildCommand>();
+app.Configure(cfg => cfg.AddCommand<BuildCommand>("build"));
+return app.Run(args);
+
