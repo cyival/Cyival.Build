@@ -5,8 +5,11 @@ namespace Cyival.Build.Environment;
 public record GodotVersion(int Major, int Minor, int Patch = 0, 
     GodotChannel Channel = GodotChannel.Stable, int StatusVersion = 0) : IComparable<GodotVersion>
 {
-    public int CompareTo(GodotVersion other)
+    public int CompareTo(GodotVersion? other)
     {
+        if (other is null)
+            return 1;
+        
         var majorComparison = Major.CompareTo(other.Major);
         if (majorComparison != 0) return majorComparison;
         var minorComparison = Minor.CompareTo(other.Minor);
