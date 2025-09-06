@@ -28,7 +28,7 @@ public class BuildManifest
 
     public void AddTarget(IBuildTarget target)
     {
-        if (target == null)
+        if (target is null)
         {
             throw new ArgumentNullException(nameof(target), "Target cannot be null.");
         }

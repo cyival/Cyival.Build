@@ -4,10 +4,10 @@ public class DependencyError
 {
     public DependencyErrorType ErrorType { get; }
     public string TargetId { get; }
-    public string RequiredId { get; }
-    public string AdditionalInfo { get; }
+    public string? RequiredId { get; }
+    public string? AdditionalInfo { get; }
 
-    public DependencyError(DependencyErrorType errorType, string targetId, string requiredId = null, string additionalInfo = null)
+    public DependencyError(DependencyErrorType errorType, string targetId, string? requiredId = null, string? additionalInfo = null)
     {
         ErrorType = errorType;
         TargetId = targetId;

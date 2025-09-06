@@ -78,8 +78,8 @@ public class DependencyValidator
             throw new DependencyValidationException(new DependencyError(
                 DependencyErrorType.CircularReference,
                 target.Id,
-                string.Empty, 
-                $"Circular dependency detected: {string.Join("->", tempMark)}->{target.Id}"));
+                requiredId: string.Empty, 
+                additionalInfo: $"Circular dependency detected: {string.Join("->", tempMark)}->{target.Id}"));
         }
 
         if (visited.Contains(target.Id))
@@ -125,8 +125,8 @@ public class DependencyValidator
                 errors.Add(new DependencyError(
                     DependencyErrorType.CircularReference, 
                     target.Id, 
-                    null, 
-                    $"Circular reference: {cyclePath}"));
+                    requiredId: null, 
+                    additionalInfo: $"Circular reference: {cyclePath}"));
             }
         }
 

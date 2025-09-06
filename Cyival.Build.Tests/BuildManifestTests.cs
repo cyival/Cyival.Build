@@ -62,7 +62,9 @@ public class BuildManifestTests
         var manifest = new BuildManifest();
         
         // Act & Assert
+        #pragma warning disable CS8625
         Assert.Throws<ArgumentNullException>(() => manifest.AddTarget(null));
+        #pragma warning restore CS8625
     }
 
     [Fact]

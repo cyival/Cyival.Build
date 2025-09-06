@@ -43,10 +43,12 @@ public class GodotVersionTests
     [InlineData("4")]
     [InlineData("4.x")]
     [InlineData("4.4.invalid")]
-    public void Parse_InvalidVersionStrings_ThrowsException(string versionString)
+    public void Parse_InvalidVersionStrings_ThrowsException(string? versionString)
     {
         // Act & Assert
+        #pragma warning disable CS8604
         Assert.ThrowsAny<Exception>(() => GodotVersion.Parse(versionString));
+        #pragma warning restore CS8604
     }
 
     [Fact]
