@@ -41,10 +41,15 @@ public class BuildManifest
         BuildTargets.Add(target);
     }
     
-    public IEnumerable<IBuildTarget> GetOrderedTargets()
+    /// <summary>
+    /// Gets targets in dependency order, optionally for a specific target
+    /// </summary>
+    /// <param name="targetId">ID of the target to build, or null to build all targets</param>
+    /// <returns>List of targets in dependency order</returns>
+    public IEnumerable<IBuildTarget> GetOrderedTargets(string? targetId = null)
     {
         var validator = new DependencyValidator(BuildTargets);
-        return validator.GetBuildOrder();
+        return validator.GetBuildOrder(targetId);
     }
 
     public IBuildTarget? GetTarget(string id) => BuildTargets.FirstOrDefault(t => t.Id == id);

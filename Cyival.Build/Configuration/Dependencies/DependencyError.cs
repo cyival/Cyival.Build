@@ -1,20 +1,22 @@
 ﻿namespace Cyival.Build.Configuration.Dependencies;
 
-public class DependencyError
+/// <summary>
+/// Structured dependency error information container
+/// </summary>
+public class DependencyError(
+    DependencyErrorType errorType,
+    string targetId,
+    string? requiredId = null,
+    string? additionalInfo = null)
 {
-    public DependencyErrorType ErrorType { get; }
-    public string TargetId { get; }
-    public string? RequiredId { get; }
-    public string? AdditionalInfo { get; }
+    public DependencyErrorType ErrorType { get; } = errorType;
+    public string TargetId { get; } = targetId;
+    public string? RequiredId { get; } = requiredId;
+    public string? AdditionalInfo { get; } = additionalInfo;
 
-    public DependencyError(DependencyErrorType errorType, string targetId, string? requiredId = null, string? additionalInfo = null)
-    {
-        ErrorType = errorType;
-        TargetId = targetId;
-        RequiredId = requiredId;
-        AdditionalInfo = additionalInfo;
-    }
-
+    /// <summary>
+    /// Returns a formatted error message
+    /// </summary>
     public override string ToString()
     {
         return ErrorType switch

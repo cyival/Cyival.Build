@@ -50,36 +50,137 @@ public class DependencyValidator
             throw new DependencyValidationException(errors);
         }
     }
-
     
-    public List<IBuildTarget> GetBuildOrder()
+    /// <summary>
+    /// Gets the build order, optionally for a specific target
+    /// </summary>
+    /// <param name="targetId">ID of the target to build, or null to build all targets</param>
+    /// <returns>List of targets in dependency order</returns>
+    public IEnumerable<IBuildTarget> GetBuildOrder(string? targetId = null)
     {
+        if (string.IsNullOrEmpty(targetId))
+        {
+            // Build all targets
+            return GetFullBuildOrder();
+        }
+        else
+        {
+            // Build specific target and its dependencies
+            return GetTargetBuildOrder(targetId);
+        }
+    }
+
+    /// <summary>
+    /// Gets the build order for all targets
+    /// </summary>
+    private IEnumerable<IBuildTarget> GetFullBuildOrder()
+    {
+        var result = new List<IBuildTarget>();
         var visited = new HashSet<string>();
         var tempMark = new HashSet<string>();
-        var result = new List<IBuildTarget>();
 
         foreach (var target in _targets)
         {
-            if (visited.Contains(target.Id))
-                continue;
-            
-            Visit(target, visited, tempMark, result);
+            if (!visited.Contains(target.Id))
+            {
+                Visit(target, visited, tempMark, result);
+            }
         }
 
-        var cyclicErrors = FindCyclicDependencies();
-        return cyclicErrors.Count != 0 ? throw new InvalidOperationException(string.Join("\n", cyclicErrors))
-             : result;
+        return result;
     }
 
-    private void Visit(IBuildTarget target, ISet<string> visited, ISet<string> tempMark, List<IBuildTarget> result)
+    /// <summary>
+    /// Gets the build order for a specific target and its dependencies
+    /// </summary>
+    /// <param name="targetId">ID of the target to build</param>
+    private IEnumerable<IBuildTarget> GetTargetBuildOrder(string targetId)
+    {
+        if (!_targetDictionary.TryGetValue(targetId, out var target))
+        {
+            throw new ArgumentException($"Target with ID '{targetId}' does not exist.");
+        }
+
+        // Collect all required targets (specified target and all its dependencies)
+        var neededTargets = CollectDependencies(target);
+        
+        // Perform topological sort on the required targets
+        return GetPartialBuildOrder(neededTargets);
+    }
+
+    /// <summary>
+    /// Collects all dependencies of the specified target
+    /// </summary>
+    private HashSet<IBuildTarget> CollectDependencies(IBuildTarget target)
+    {
+        var dependencies = new HashSet<IBuildTarget>();
+        var stack = new Stack<IBuildTarget>();
+        stack.Push(target);
+
+        while (stack.Count > 0)
+        {
+            var current = stack.Pop();
+            if (!dependencies.Add(current))
+                continue;
+
+            // Add all dependencies and check if they exist
+            foreach (var requiredId in current.Requirements)
+            {
+                if (!_targetDictionary.TryGetValue(requiredId, out var dependency))
+                {
+                    throw new DependencyValidationException(
+                        new DependencyError(
+                            DependencyErrorType.InvalidReference,
+                            current.Id,
+                            requiredId)
+                    );
+                }
+                stack.Push(dependency);
+            }
+        }
+
+        return dependencies;
+    }
+
+    /// <summary>
+    /// Performs topological sort on a subset of targets
+    /// </summary>
+    private IEnumerable<IBuildTarget> GetPartialBuildOrder(HashSet<IBuildTarget> targets)
+    {
+        var result = new List<IBuildTarget>();
+        var visited = new HashSet<string>();
+        var tempMark = new HashSet<string>();
+
+        // Only sort the required targets
+        foreach (var target in targets)
+        {
+            if (!visited.Contains(target.Id))
+            {
+                Visit(target, visited, tempMark, result, targets);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Visits a target and processes its dependencies (supports partial target set)
+    /// </summary>
+    private void Visit(
+        IBuildTarget target, 
+        ISet<string> visited, 
+        ISet<string> tempMark, 
+        List<IBuildTarget> result,
+        HashSet<IBuildTarget>? allowedTargets = null)
     {
         if (tempMark.Contains(target.Id))
         {
-            throw new DependencyValidationException(new DependencyError(
-                DependencyErrorType.CircularReference,
-                target.Id,
-                requiredId: string.Empty, 
-                additionalInfo: $"Circular dependency detected: {string.Join("->", tempMark)}->{target.Id}"));
+            throw new DependencyValidationException(
+                new DependencyError(
+                    DependencyErrorType.CircularReference, 
+                    target.Id, 
+                    additionalInfo: $"Circular dependency detected: {string.Join("->", tempMark)}->{target.Id}")
+            );
         }
 
         if (visited.Contains(target.Id))
@@ -89,12 +190,13 @@ public class DependencyValidator
 
         tempMark.Add(target.Id);
 
-        // Visit all dependencies first
+        // 先访问所有依赖项（如果依赖项在允许的目标集合中）
         foreach (var requiredId in target.Requirements)
         {
-            if (_targetDictionary.TryGetValue(requiredId, out var dependency))
+            if (_targetDictionary.TryGetValue(requiredId, out var dependency) &&
+                (allowedTargets == null || allowedTargets.Contains(dependency)))
             {
-                Visit(dependency, visited, tempMark, result);
+                Visit(dependency, visited, tempMark, result, allowedTargets);
             }
         }
 

@@ -2,6 +2,9 @@
 
 namespace Cyival.Build.Configuration.Dependencies;
 
+/// <summary>
+/// Custom exception for dependency validation errors
+/// </summary>
 public class DependencyValidationException : Exception
 {
     public List<DependencyError> Errors { get; }
@@ -12,11 +15,15 @@ public class DependencyValidationException : Exception
         Errors = errors;
     }
 
+    // a QOL constructor for single errors
     public DependencyValidationException(DependencyError error)
     {
         Errors = [error];
     }
 
+    /// <summary>
+    /// Returns a formatted error report
+    /// </summary>
     public override string ToString()
     {
         var sb = new StringBuilder();
