@@ -102,32 +102,32 @@ public class DependencyValidator
         visited.Add(target.Id);
         result.Add(target);
     }
-
+    
     private List<DependencyError> FindCyclicDependencies()
     {
         var errors = new List<DependencyError>();
         var visited = new HashSet<string>();
-        var recursionStack = new HashSet<string>();
-
+    
         foreach (var target in _targets)
         {
-            if (visited.Contains(target.Id))
-            {
+            // Skip self-reference targets，because they have already checked in CheckDependencies.
+            if (target.Requirements.Contains(target.Id))
                 continue;
-            }
 
-            var path = new Stack<string>();
-            if (!FindCycles(target, visited, recursionStack, path))
-            {
+            if (visited.Contains(target.Id))
                 continue;
-            }
             
-            errors.Add(new DependencyError(
-                DependencyErrorType.CircularReference,
-                target.Id,
-                string.Empty,
-                $"Circular reference: {string.Join(" -> ", path.Reverse())}"));
-            recursionStack.Clear();
+            var path = new Stack<string>();
+            var recursionStack = new HashSet<string>();
+            if (FindCycles(target, visited, recursionStack, path))
+            {
+                var cyclePath = string.Join(" -> ", path.Reverse());
+                errors.Add(new DependencyError(
+                    DependencyErrorType.CircularReference, 
+                    target.Id, 
+                    null, 
+                    $"Circular reference: {cyclePath}"));
+            }
         }
 
         return errors;

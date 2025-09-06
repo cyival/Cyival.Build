@@ -46,4 +46,8 @@ public class BuildManifest
         var validator = new DependencyValidator(BuildTargets);
         return validator.GetBuildOrder();
     }
+
+    public IBuildTarget? GetTarget(string id) => BuildTargets.FirstOrDefault(t => t.Id == id);
+
+    public IEnumerable<IBuildTarget> GetAllTargets() => BuildTargets;
 }
