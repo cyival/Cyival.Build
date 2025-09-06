@@ -2,10 +2,10 @@
 using Cyival.Build.Cli.Command;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
-using Velopack;
+//using Velopack;
 using Spectre.Console.Cli;
 
-VelopackApp.Build().Run();
+//VelopackApp.Build().Run();
 
 var version = typeof(BuildApp).Assembly.GetName().Version;
 
