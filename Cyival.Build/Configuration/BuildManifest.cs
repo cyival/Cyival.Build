@@ -18,12 +18,18 @@ namespace Cyival.Build.Configuration;
 /// </summary>
 public class BuildManifest
 {
-    public List<IBuildTarget> BuildTargets { get; } = [];
-
+    public List<IBuildTarget> BuildTargets { get; init; } = [];
+    
+    public List<object> GlobalConfigurations { get; init; } = [];
+    
+    public bool DependencyCheckPerformed { get; private set; } = false;
+    
     public void CheckDependencies()
     {
         var validator = new DependencyValidator(BuildTargets);
         validator.CheckDependencies();
+
+        DependencyCheckPerformed = true;
     }
 
     public void AddTarget(IBuildTarget target)
@@ -39,6 +45,8 @@ public class BuildManifest
         }
         
         BuildTargets.Add(target);
+
+        DependencyCheckPerformed = false;
     }
     
     /// <summary>
@@ -55,4 +63,6 @@ public class BuildManifest
     public IBuildTarget? GetTarget(string id) => BuildTargets.FirstOrDefault(t => t.Id == id);
 
     public IEnumerable<IBuildTarget> GetAllTargets() => BuildTargets;
+    
+    public string? GetDefaultTargetId() => BuildTargets.SingleOrDefault(t => t.IsDefault)?.Id;
 }

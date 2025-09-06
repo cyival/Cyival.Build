@@ -49,11 +49,19 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
         AnsiConsole.Status()
             .Start("Working...", ctx =>
             {
-                var manifest = ManifestParser.Parse(settings.Path);
-                AnsiConsole.MarkupLine(":check_mark:  Loaded manifest.");
-                
                 using var app = new BuildApp();
                 app.InitializePlugins();
+                AnsiConsole.Markup(":check_mark:  Initialized plugins.\n");
+                
+                var parser = app.CreateManifestParser("godot");
+                var manifest = parser.Parse(settings.Path);
+                
+                AnsiConsole.MarkupLine(string.Join(' ', manifest.BuildTargets.Select(t => t.Id)));
+                AnsiConsole.MarkupLine(string.Join(' ', manifest.GlobalConfigurations.Select(c => c.GetType().Name)));
+                
+                AnsiConsole.MarkupLine(":check_mark:  Loaded manifest.");
+                
+                app.Initialize(manifest);
                 AnsiConsole.MarkupLine(":check_mark:  Initialized builder.");
                 
                 ctx.Status("Checking environment...");

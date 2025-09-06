@@ -53,22 +53,37 @@ public class PluginStore
             });
     }
 
-    public void RegisterEnvironmentProvider(string id, IEnvironmentProviderBase provider)
+    private void RegisterEnvironmentProvider(string id, IEnvironmentProviderBase provider)
     {
         _environmentProviders.Add(id, provider);
     }
     
-    public void RegisterConfigurationProvider(string id, IConfigurationProviderBase provider)
+    public void RegisterEnvironmentProvider<T>(string id) where T : IEnvironmentProviderBase, new()
+    {
+        RegisterEnvironmentProvider(id, new T());
+    }
+    
+    private void RegisterConfigurationProvider(string id, IConfigurationProviderBase provider)
     {
         _configurationProviders.Add(id, provider);
     }
     
-    public void RegisterTargetBuilder(string id, ITargetBuilderBase builder)
+    public void RegisterConfigurationProvider<T>(string id) where T : IConfigurationProviderBase, new()
+    {
+        RegisterConfigurationProvider(id, new T());
+    }
+    
+    private void RegisterTargetBuilder(string id, ITargetBuilderBase builder)
     {
         _targetBuilders.Add(id, builder);
     }
 
-    public void RegisterTargetType(string id, Type type)
+    public void RegisterTargetBuilder<T>(string id) where T : ITargetBuilderBase, new()
+    {
+        RegisterTargetBuilder(id, new T());
+    }
+    
+    private void RegisterTargetType(string id, Type type)
     {
         if (type.GetInterfaces().All(i => i != typeof(IBuildTarget)))
         {
@@ -77,4 +92,13 @@ public class PluginStore
         
         _targetTypes.Add(id, type);
     }
+    
+    public void RegisterTargetType<T>(string id) where T : TargetBase, IBuildTarget
+    {
+        RegisterTargetType(id, typeof(T));
+    }
+
+    public Type? GetTargetTypeById(string typeId) => _targetTypes.GetValueOrDefault(typeId);
+    
+    public Dictionary<string, IConfigurationProviderBase> GetConfigurationProviders() => _configurationProviders;
 }

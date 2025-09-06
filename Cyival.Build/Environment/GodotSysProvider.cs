@@ -1,6 +1,6 @@
 ﻿namespace Cyival.Build.Environment;
 
-public class GodotProvider : IEnvironmentProvider<GodotInstance>
+public class GodotSysProvider : IEnvironmentProvider<GodotInstance>
 {
     public IEnumerable<GodotInstance>? GetEnvironment()
     {

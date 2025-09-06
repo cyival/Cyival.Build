@@ -9,9 +9,9 @@ public class DefaultPlugin : Plugin
 {
     public override void Initialize(PluginStore store)
     {
-        store.RegisterConfigurationProvider("godot", new GodotConfigurationProvider());
-        store.RegisterEnvironmentProvider("godot.system", new GodotProvider());
-        store.RegisterTargetBuilder("godot", new GodotTargetBuilder());
-        store.RegisterTargetType("godot", typeof(GodotTarget));
+        store.RegisterConfigurationProvider<GodotConfigurationProvider>("godot");
+        store.RegisterEnvironmentProvider<GodotSysProvider>("godot.system");
+        store.RegisterTargetBuilder<GodotTargetBuilder>("godot");
+        store.RegisterTargetType<GodotTarget>("godot");
     }
 }

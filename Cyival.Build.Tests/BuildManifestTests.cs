@@ -4,12 +4,14 @@ using Configuration;
 using Configuration.Dependencies;
 using Build;
 
-internal class MockBuildTarget(string id, IEnumerable<string>? requirements=null) : IBuildTarget
+internal class MockBuildTarget : TargetBase, IBuildTarget
 {
-    public string Path { get; } = "";
-    public string Id { get; } = id;
-    public List<string> Requirements { get; } = requirements?.ToList() ?? [];
+    public MockBuildTarget(string id, IEnumerable<string>? requirements=null)
+         : base(string.Empty, id, requirements)
+    {
         
+    }
+    
     public void SetLocalConfiguration<T>(T configuration)
     {
         throw new NotImplementedException();

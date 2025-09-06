@@ -16,90 +16,9 @@ public sealed class BuildApp : IDisposable
     private ILogger<BuildApp> _logger = LoggerFactory.CreateLogger<BuildApp>();
 
     private PluginStore _pluginStore = new PluginStore();
+
+    public BuildManifest? Manifest { get; private set; } = null;
     
-    /*public void LoadPlugins()
-    {
-        // Get all types.
-        var types = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(assembly => assembly.GetTypes())
-            .Where(type => type.IsDefined(typeof(BuildPluginAttribute), false) &&
-                           type is { IsAbstract: false, IsInterface: false })
-            .ToList();
-
-        // Register environment providers.
-        types    
-            .Where(type => type.GetInterfaces()
-                               .Any(i => i.IsGenericType && 
-                                         i.GetGenericTypeDefinition() == typeof(IEnvironmentProvider<>)))
-            .ToList()
-            .ForEach(type =>
-            {
-                if (Activator.CreateInstance(type) is not IEnvironmentProviderBase instance)
-                {
-                    _logger.LogWarning("Failed to create instance of environment provider: {ProviderType}", type.FullName);
-                    return;
-                }
-
-                _environmentProviders.Add(instance);
-                _logger.LogInformation("Loaded environment provider: {ProviderType}", type.FullName);
-                
-            });
-        
-        // Register configuration providers.
-        types    
-            .Where(type => type.GetInterfaces()
-                               .Any(i => i.IsGenericType && 
-                                         i.GetGenericTypeDefinition() == typeof(IConfigurationProvider<>)))
-            .ToList()
-            .ForEach(type =>
-            {
-                if (Activator.CreateInstance(type) is not IConfigurationProviderBase instance)
-                {
-                    _logger.LogWarning("Failed to create instance of configuration provider: {ProviderType}", type.FullName);
-                    return;
-                }
-
-                _configurationProviders.Add(instance);
-                _logger.LogInformation("Loaded configuration provider: {ProviderType}", type.FullName);
-                
-            });
-        
-        // Register target builders.
-        types    
-            .Where(type => type.GetInterfaces()
-                               .Any(i => i.IsGenericType && 
-                                         i.GetGenericTypeDefinition() == typeof(ITargetBuilder<>)))
-            .ToList()
-            .ForEach(type =>
-            {
-                if (Activator.CreateInstance(type) is not ITargetBuilderBase instance)
-                {
-                    _logger.LogWarning("Failed to create instance of target builder: {BuilderType}", type.FullName);
-                    return;
-                }
-
-                _targetBuilders.Add(instance);
-                _logger.LogInformation("Loaded target builder: {BuilderType}", type.FullName);
-                
-            });
-        
-        types
-            .Where(type => type.GetInterfaces()
-                                .Any(i => i == typeof(IBuildTarget)))
-            .ToList()
-            .ForEach(type =>
-            {
-                var attr = type.GetCustomAttribute<BuildPluginAttribute>();
-                if (attr is null || string.IsNullOrWhiteSpace(attr.Id))
-                {
-                    _logger.LogWarning("Build target {TargetType} is missing BuildPluginAttribute or Id", type.FullName);
-                    return;
-                }
-                
-                _targetTypes.Add(attr.Id, type);
-            });
-    }*/
-
     public void Dispose()
     {
         // TODO release managed resources here
@@ -109,6 +28,25 @@ public sealed class BuildApp : IDisposable
     
     public void Initialize(BuildManifest manifest)
     {
-        
+        if (!manifest.DependencyCheckPerformed)
+            manifest.CheckDependencies();
+
+        Manifest = manifest;
     }
+    
+    public void Build(string? targetId)
+    {
+        if (Manifest is null)
+            throw new InvalidOperationException("BuildApp is not initialized. Call Initialize() first.");
+        
+        if (string.IsNullOrEmpty(targetId))
+            targetId = Manifest.GetDefaultTargetId()
+                       ?? throw new InvalidOperationException("No default targets or more than one default target defined. Please specify a target to build.");
+
+        var buildList = Manifest.GetOrderedTargets(targetId);
+        
+        Console.WriteLine(string.Join(',', buildList));
+    }
+    
+    public ManifestParser CreateManifestParser(string? defaultTargetTypeId=null) => new ManifestParser(_pluginStore, defaultTargetTypeId);
 }
