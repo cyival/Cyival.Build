@@ -54,7 +54,7 @@ public class BuildManifest
     /// </summary>
     /// <param name="targetId">ID of the target to build, or null to build all targets</param>
     /// <returns>List of targets in dependency order</returns>
-    public IEnumerable<IBuildTarget> GetOrderedTargets(string? targetId = null)
+    public IReadOnlyList<IBuildTarget> GetOrderedTargets(string? targetId = null)
     {
         var validator = new DependencyValidator(BuildTargets);
         return validator.GetBuildOrder(targetId);
@@ -63,6 +63,11 @@ public class BuildManifest
     public IBuildTarget? GetTarget(string id) => BuildTargets.FirstOrDefault(t => t.Id == id);
 
     public IEnumerable<IBuildTarget> GetAllTargets() => BuildTargets;
-    
-    public string? GetDefaultTargetId() => BuildTargets.SingleOrDefault(t => t.IsDefault)?.Id;
+
+    public string? GetDefaultTargetId()
+    {
+        return BuildTargets.Count > 1 ? 
+               BuildTargets.SingleOrDefault(t => t.IsDefault)?.Id :
+               BuildTargets.FirstOrDefault()?.Id;
+    }
 }

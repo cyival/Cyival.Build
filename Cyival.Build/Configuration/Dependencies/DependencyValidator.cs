@@ -56,24 +56,22 @@ public class DependencyValidator
     /// </summary>
     /// <param name="targetId">ID of the target to build, or null to build all targets</param>
     /// <returns>List of targets in dependency order</returns>
-    public IEnumerable<IBuildTarget> GetBuildOrder(string? targetId = null)
+    public IReadOnlyList<IBuildTarget> GetBuildOrder(string? targetId = null)
     {
         if (string.IsNullOrEmpty(targetId))
         {
             // Build all targets
             return GetFullBuildOrder();
         }
-        else
-        {
-            // Build specific target and its dependencies
-            return GetTargetBuildOrder(targetId);
-        }
+        
+        // Build specific target and its dependencies
+        return GetTargetBuildOrder(targetId);
     }
 
     /// <summary>
     /// Gets the build order for all targets
     /// </summary>
-    private IEnumerable<IBuildTarget> GetFullBuildOrder()
+    private IReadOnlyList<IBuildTarget> GetFullBuildOrder()
     {
         var result = new List<IBuildTarget>();
         var visited = new HashSet<string>();
@@ -94,7 +92,7 @@ public class DependencyValidator
     /// Gets the build order for a specific target and its dependencies
     /// </summary>
     /// <param name="targetId">ID of the target to build</param>
-    private IEnumerable<IBuildTarget> GetTargetBuildOrder(string targetId)
+    private IReadOnlyList<IBuildTarget> GetTargetBuildOrder(string targetId)
     {
         if (!_targetDictionary.TryGetValue(targetId, out var target))
         {
@@ -145,7 +143,7 @@ public class DependencyValidator
     /// <summary>
     /// Performs topological sort on a subset of targets
     /// </summary>
-    private IEnumerable<IBuildTarget> GetPartialBuildOrder(HashSet<IBuildTarget> targets)
+    private IReadOnlyList<IBuildTarget> GetPartialBuildOrder(HashSet<IBuildTarget> targets)
     {
         var result = new List<IBuildTarget>();
         var visited = new HashSet<string>();
