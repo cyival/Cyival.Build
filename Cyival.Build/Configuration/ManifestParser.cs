@@ -19,6 +19,17 @@ public class ManifestParser(PluginStore store, string? defaultTargetType=null)
         var manifestString = File.ReadAllText(manifestPath);
         var model = Toml.ToModel(manifestString);
         
+        // Check version
+        if (!model.TryGetValue("minimal-version", out var minimalVersionObject))
+            throw new InvalidOperationException("No minimal version specified in manifest.");
+
+        var curVer = GetType().Assembly.GetName().Version ?? throw new Exception("Failed to get version of assembly");
+        var curVerNum = curVer.Major + curVer.Minor * 0.1;
+        var minVer = (double)minimalVersionObject;
+
+        if (minVer > curVerNum)
+            throw new NotSupportedException($"At least required version is {minVer}, but installed is {curVerNum}");
+            
         // Parse targets
         if (!model.TryGetValue("targets", out var targetsObj))
             throw new NotSupportedException("Zero targets defined in manifest.");
