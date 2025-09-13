@@ -2,9 +2,11 @@ name: Test on Commit
 
 on:
   push:
-    branches: [main, master]
   pull_request:
     branches: [main, master]
+    paths:
+    - '**.cs'
+    - '**.csproj'
 
 jobs:
   test:
