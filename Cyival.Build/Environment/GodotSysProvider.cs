@@ -2,9 +2,10 @@
 
 public class GodotSysProvider : IEnvironmentProvider<GodotInstance>
 {
-    public IEnumerable<GodotInstance>? GetEnvironment()
+    public IEnumerable<GodotInstance> GetEnvironment()
     {
-        throw new NotImplementedException();
+        // TODO
+        return [new GodotInstance()];
     }
 
     public bool CanProvide()

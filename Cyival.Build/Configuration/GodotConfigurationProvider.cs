@@ -6,7 +6,8 @@ public class GodotConfigurationProvider : IConfigurationProvider<GodotConfigurat
 {
     public GodotConfiguration GetDefaultConfiguration()
     {
-        throw new NotImplementedException();
+        // TODO
+        return new GodotConfiguration();
     }
 
     public GodotConfiguration ParseFromTable(TomlTable table)

@@ -5,4 +5,6 @@ public interface IEnvironmentProviderBase
     Type ProvidedType { get; }
 
     bool CanProvide();
+
+    IEnumerable<object> GetEnvironmentAsObject();
 }

@@ -99,6 +99,15 @@ public class PluginStore
     }
 
     public Type? GetTargetTypeById(string typeId) => _targetTypes.GetValueOrDefault(typeId);
+
+    public string? GetTargetTypeIdByType(Type type) => _targetTypes.SingleOrDefault(kvp => kvp.Value == type).Key;
+    
+    public ITargetBuilderBase GetBuilderByTargetTypeId(string typeId) => _targetBuilders[typeId]; // TODO
     
     public Dictionary<string, IConfigurationProviderBase> GetConfigurationProviders() => _configurationProviders;
+
+    public List<IEnvironmentProviderBase> GetEnvironmentProvidersByType(Type type) =>
+        _environmentProviders.Values.Where(cp => cp.ProvidedType == type).ToList();
+    
+    // TODO: Define which provider should be used first.
 }

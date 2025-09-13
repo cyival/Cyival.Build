@@ -4,5 +4,9 @@ namespace Cyival.Build.Configuration;
 
 public interface IConfigurationProviderBase
 {
-    public object ParseFromTableAsObject(TomlTable table);
+    Type ProvidedType { get; }
+    
+    object ParseFromTableAsObject(TomlTable table);
+
+    object GetDefaultConfigurationAsObject();
 }

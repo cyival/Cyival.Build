@@ -1,6 +1,5 @@
 ﻿using Cyival.Build.Build;
 using Cyival.Build.Plugin;
-using Microsoft.Extensions.Logging;
 using Tomlyn;
 using Tomlyn.Model;
 

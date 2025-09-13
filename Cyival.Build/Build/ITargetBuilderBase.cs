@@ -7,4 +7,6 @@ public interface ITargetBuilderBase
     Type[] GetRequiredConfigurationTypes();
 
     void Setup(IEnumerable<object> environment, IEnumerable<object> configuration);
+    
+    public BuildResult Build(IBuildTarget target);
 }

@@ -5,9 +5,14 @@ namespace Cyival.Build.Configuration;
 public interface IConfigurationProvider<out T> : IConfigurationProviderBase
     where T : struct
 {
-    public T GetDefaultConfiguration();
+    Type IConfigurationProviderBase.ProvidedType => typeof(T);
+    
+    T GetDefaultConfiguration();
 
-    public T ParseFromTable(TomlTable table);
+    object IConfigurationProviderBase.GetDefaultConfigurationAsObject() 
+        => GetDefaultConfiguration();
+
+    T ParseFromTable(TomlTable table);
 
     object IConfigurationProviderBase.ParseFromTableAsObject(TomlTable table)
         => ParseFromTable(table);

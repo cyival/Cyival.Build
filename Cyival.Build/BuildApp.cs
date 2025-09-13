@@ -17,6 +17,10 @@ public sealed class BuildApp : IDisposable
 
     private PluginStore _pluginStore = new PluginStore();
 
+    private List<object> _environments = [];
+
+    private HashSet<ITargetBuilderBase> _builders = [];
+
     public BuildManifest? Manifest { get; private set; } = null;
     
     public void Dispose()
@@ -33,8 +37,46 @@ public sealed class BuildApp : IDisposable
 
         Manifest = manifest;
     }
+
+    public void CollectItems(string? targetId = null)
+    {
+        if (Manifest is null)
+            throw new InvalidOperationException("BuildApp is not initialized. Call Initialize() first.");
+
+        var targetTypes = Manifest.BuildTargets
+            .Select(t => _pluginStore.GetTargetTypeIdByType(t.GetType()) ?? throw new NullReferenceException())
+            .ToHashSet(); // This should make same ids into a single one.
+
+        var builders = new HashSet<ITargetBuilderBase>();
+        var environments = new List<object>();
+        
+        foreach (var typeId in targetTypes)
+        {
+            // Get builder
+            var builder = _pluginStore.GetBuilderByTargetTypeId(typeId);
+            builders.Add(builder);
+
+            var environmentTypes = builder.GetRequiredEnvironmentTypes();
+
+            foreach (var envType in environmentTypes)
+            {
+                if (environments.Any(e => e.GetType() == envType))
+                    continue;
+
+                var providers = _pluginStore.GetEnvironmentProvidersByType(envType);
+                
+                providers.Where(p => p.CanProvide()).ToList().ForEach(p =>
+                {
+                    environments = [ .. environments , .. p.GetEnvironmentAsObject()];
+                });
+            }
+        }
+
+        _builders = builders;
+        _environments = environments;
+    }
     
-    public void Build(string? targetId)
+    public TargetBuildApp Build(string? targetId)
     {
         if (Manifest is null)
             throw new InvalidOperationException("BuildApp is not initialized. Call Initialize() first.");
@@ -46,7 +88,44 @@ public sealed class BuildApp : IDisposable
         var buildList = Manifest.GetOrderedTargets(targetId);
         
         Console.WriteLine(string.Join(',', buildList));
+
+        if (_builders.Count == 0 || _environments.Count == 0)
+            throw new InvalidOperationException();
+        
+        // check for missing required configuration
+        var configurations = GetRequiredConfigurations();
+        
+        foreach (var builder in _builders)
+        {
+            builder.Setup(_environments, configurations);
+        }
+
+        return new TargetBuildApp(buildList, _builders, _environments);
     }
     
     public ManifestParser CreateManifestParser(string? defaultTargetTypeId=null) => new ManifestParser(_pluginStore, defaultTargetTypeId);
+
+    public List<object> GetRequiredConfigurations()
+    {
+        if (Manifest is null)
+            throw new InvalidOperationException("BuildApp is not initialized. Call Initialize() first.");
+        
+        var configurations = Manifest.GlobalConfigurations;
+        var cfgProviders = _pluginStore.GetConfigurationProviders().Values.ToList();
+        
+        foreach (var builder in _builders)
+        {
+            foreach (var type in builder.GetRequiredConfigurationTypes())
+            {
+                if (configurations.All(cfg => cfg.GetType() != type))
+                {
+                    configurations.Add(
+                        cfgProviders.First(p => p.ProvidedType == type)
+                            .GetDefaultConfigurationAsObject());
+                }
+            }
+        }
+
+        return configurations;
+    }
 }

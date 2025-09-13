@@ -9,20 +9,29 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
 
     private GodotConfiguration _globalGodotConfiguration = new();
     
-    public void Build(IBuildTarget target)
+    public BuildResult Build(IBuildTarget target)
     {
         var buildTarget = target as GodotTarget ?? throw new InvalidOperationException("Target is not a GodotTarget");
         
         /*var godotInstance = _godotInstances.FirstOrDefault(i => i.Version == buildTarget.GodotVersion) 
                             ?? _godotInstances.FirstOrDefault(i => i.IsDefault) 
                             ?? throw new InvalidOperationException("No suitable Godot instance found");*/
+
+        return BuildResult.Failed;
     }
 
     public Type[] GetRequiredEnvironmentTypes() => [typeof(GodotInstance)];
 
     public Type[] GetRequiredConfigurationTypes() => [typeof(GodotConfiguration)];
     
-    public void Setup(IEnumerable<object> environment, IEnumerable<object> configuration)
+    
+    /// <summary>
+    /// Set up the builder with specified environment and global configurations.
+    /// </summary>
+    /// <param name="environment"></param>
+    /// <param name="globalConfiguration"></param>
+    /// <exception cref="InvalidOperationException"></exception>
+    public void Setup(IEnumerable<object> environment, IEnumerable<object> globalConfiguration)
     {
         var instances = environment.OfType<GodotInstance>();
         var godotInstances = instances as GodotInstance[] ?? instances.ToArray();
@@ -31,9 +40,8 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         
         _godotInstances = godotInstances.OrderBy(t => t).ToList();
         
-        var godotConfiguration = configuration.OfType<GodotConfiguration>().ToArray();
+        var godotConfiguration = globalConfiguration.OfType<GodotConfiguration>().ToArray();
         if (godotConfiguration.Length > 0)
             _globalGodotConfiguration = godotConfiguration.First();
-
     }
 }
