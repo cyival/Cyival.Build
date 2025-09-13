@@ -1,5 +1,10 @@
 # Cyival.Build
 
+[![Test on Commit](https://github.com/cyival/Cyival.Build/actions/workflows/test.yml/badge.svg)](https://github.com/cyival/Cyival.Build/actions/workflows/test.yml)
+![NuGet Version](https://img.shields.io/nuget/v/Cyival.Build.Cli)
+![GitHub License](https://img.shields.io/github/license/cyival/Cyival.Build)
+
+
 A build tool for Godot projects.
 
 ## Features
