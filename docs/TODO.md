@@ -19,7 +19,7 @@
 
 ## Document
 
-- [ ] Simple tutorial for quick start
+- [*] Simple tutorial for quick start
 - [ ] Detailed explanation for manifest
 - [ ] Detailed CLI help
 - [ ] Translations for CLI
