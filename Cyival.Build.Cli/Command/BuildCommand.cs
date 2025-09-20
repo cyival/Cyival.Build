@@ -7,6 +7,8 @@ using System.Diagnostics;
 
 namespace Cyival.Build.Cli.Command;
 
+using Utils;
+
 public sealed class BuildCommand : Command<BuildCommand.Settings>
 {
     public sealed class Settings : CommandSettings
@@ -44,9 +46,9 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
         AnsiConsole.MarkupLine($"Building {settings.Path}\n");
         
 #if DEBUG
-        //BuildApp.LoggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        BuildApp.LoggerFactory = LoggerFactory.Create(builder => builder.AddAnsiConsole());
 #endif
-
+        
         var stopwatch = Stopwatch.StartNew();
         
         AnsiConsole.Status()
