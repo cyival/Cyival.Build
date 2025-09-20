@@ -1,8 +1,8 @@
-﻿using Cyival.Build.Build;
-using Cyival.Build.Configuration;
-using Cyival.Build.Environment;
+﻿namespace Cyival.Build.Plugin.Default;
 
-namespace Cyival.Build.Plugin;
+using Build;
+using Configuration;
+using Environment;
 
 [Plugin("cyival.build")]
 public class DefaultPlugin : Plugin
@@ -13,5 +13,9 @@ public class DefaultPlugin : Plugin
         store.RegisterEnvironmentProvider<GodotSysProvider>("godot.system");
         store.RegisterTargetBuilder<GodotTargetBuilder>("godot");
         store.RegisterTargetType<GodotTarget>("godot");
+        
+        store.RegisterConfigurationProvider<CopyOnlyConfigurationProvider>("copy");
+        store.RegisterTargetBuilder<CopyOnlyTargetBuilder>("copy");
+        store.RegisterTargetType<CopyOnlyTarget>("copy");
     }
 }

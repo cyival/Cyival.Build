@@ -1,11 +1,13 @@
-﻿namespace Cyival.Build.Environment;
+﻿using Cyival.Build.Environment;
+
+namespace Cyival.Build.Plugin.Default.Environment;
 
 public class GodotSysProvider : IEnvironmentProvider<GodotInstance>
 {
     public IEnumerable<GodotInstance> GetEnvironment()
     {
         // TODO
-        return [new GodotInstance()];
+        return [];
     }
 
     public bool CanProvide()

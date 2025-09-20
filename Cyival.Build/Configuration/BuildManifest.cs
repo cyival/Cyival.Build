@@ -23,6 +23,8 @@ public class BuildManifest
     public List<object> GlobalConfigurations { get; init; } = [];
     
     public bool DependencyCheckPerformed { get; private set; } = false;
+ 
+    public string ManifestPath { get; init; }
     
     public void CheckDependencies()
     {

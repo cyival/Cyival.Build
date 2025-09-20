@@ -1,4 +1,4 @@
-﻿namespace Cyival.Build.Environment;
+﻿namespace Cyival.Build.Plugin.Default.Environment;
 
 public enum GodotChannel
 {

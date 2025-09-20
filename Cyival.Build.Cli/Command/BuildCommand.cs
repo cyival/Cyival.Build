@@ -16,9 +16,15 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
         [CommandArgument(0, "[PATH]")]
         [DefaultValue("./build.toml")]
         public required string Path { get; set; }
+        
+        [CommandOption("-o|--out")]
+        [DefaultValue("./out")]
+        public required string OutPath { get; set; }
     }
 
-    private string BasePath = "";
+    private string _basePath = "";
+
+    private bool _isBuildOkay = true;
     
     /// <summary>
     /// Validate path and make path absolute.
@@ -36,7 +42,7 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
         }
 
         settings.Path = Path.GetFullPath(settings.Path);
-        BasePath = Path.GetDirectoryName(settings.Path) ?? throw new IOException("Failed to get base path from manifest.");
+        _basePath = Path.GetDirectoryName(settings.Path) ?? throw new IOException("Failed to get base path from manifest.");
     }
     
     public override int Execute(CommandContext context, Settings settings)
@@ -55,10 +61,18 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
             .Start("Working...", ctx => Build(ctx, settings));
         
         stopwatch.Stop();
-        AnsiConsole.MarkupLine($"\n[green]Build completed[/] in {stopwatch.Elapsed.TotalSeconds:0.##}s.");
-        throw new NotImplementedException();
 
-        return 0;
+        if (_isBuildOkay)
+        {
+            AnsiConsole.MarkupLine($"\n[green]Build completed[/] in {stopwatch.Elapsed.TotalSeconds:0.##}s.");
+            
+            return 0;
+        }
+        
+        AnsiConsole.MarkupLine($"\n[red]Build failed[/] in {stopwatch.Elapsed.TotalSeconds:0.##}s.");
+
+        return -1;
+        
     }
 
     private void Build(StatusContext ctx, Settings settings)
@@ -82,9 +96,9 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
         app.CollectItems();
 
         ctx.Status("Building...");
-        var buildApp = app.Build(null);
+        var buildApp = app.Build(null, settings.OutPath);
 
-        while (!buildApp.IsBuildDone())
+        while (!buildApp.IsBuildAllDone() && !buildApp.IsAnyError())
         {
             var next = buildApp.GetNext();
                     
@@ -93,8 +107,10 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
                     
             AnsiConsole.MarkupLine($"   Building target: [yellow bold]{buildContext.TargetId}[/]");
             ctx.Status($"Building ... ({buildApp.GetCurrentIndex() + 1} of {buildApp.GetTotalTargets()})");
-            
-            Thread.Sleep(5000);
+
+            buildContext.Build();
         }
+
+        _isBuildOkay = !buildApp.IsAnyError();
     }
 }

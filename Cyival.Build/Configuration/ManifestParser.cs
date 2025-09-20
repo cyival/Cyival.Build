@@ -1,5 +1,6 @@
 ﻿using Cyival.Build.Build;
 using Cyival.Build.Plugin;
+using Microsoft.Extensions.Logging;
 using Tomlyn;
 using Tomlyn.Model;
 
@@ -8,9 +9,16 @@ namespace Cyival.Build.Configuration;
 public class ManifestParser(PluginStore store, string? defaultTargetType=null)
 {
     private PluginStore _pluginStore = store;
+
+    private ILogger<ManifestParser> _logger = BuildApp.LoggerFactory.CreateLogger<ManifestParser>();
     
     public BuildManifest Parse(string manifestPath)
     {
+        // Forced to be absolute path
+        manifestPath = Path.GetFullPath(manifestPath);
+        
+        _logger.LogInformation("Reading manifest at {}", manifestPath);
+        
         if (!File.Exists(manifestPath))
         {
              throw new ArgumentException("File not exists.", nameof(manifestPath));
@@ -38,6 +46,8 @@ public class ManifestParser(PluginStore store, string? defaultTargetType=null)
         
         var targets = ParseTargets(targetsSections);
         
+        _logger.LogInformation("Parsed targets: [{}]", string.Join(';',targets.Select(t => $"{t.Id}: {t.GetType().Name}")));
+        
         if (targets.Count == 0)
             throw new NotSupportedException("Zero targets defined in manifest.");
 
@@ -52,6 +62,7 @@ public class ManifestParser(PluginStore store, string? defaultTargetType=null)
         {
             BuildTargets = targets,
             GlobalConfigurations = globalConfigurations,
+            ManifestPath = manifestPath,
         };
     }
 
@@ -64,7 +75,8 @@ public class ManifestParser(PluginStore store, string? defaultTargetType=null)
             var targetTable = (TomlTable)value;
             
             // Read generic properties
-            var path = targetTable.TryGetValue("path", out var pathObj) ? pathObj?.ToString() : null;
+            var path = targetTable.TryGetValue("path", out var pathObj) ? pathObj.ToString() : null;
+            var dest = targetTable.TryGetValue("out", out var destPathObj) ? destPathObj.ToString() : string.Empty;
             var requirements = targetTable.TryGetValue("requirements", out var reqObj)
                 ? ((TomlArray)reqObj).Select(r => r?.ToString() ?? string.Empty).Where(r => !string.IsNullOrEmpty(r)).ToList()
                 : [];
@@ -84,7 +96,8 @@ public class ManifestParser(PluginStore store, string? defaultTargetType=null)
                              ?? throw new NotSupportedException($"Target type '{typeId}' is not registered.");
             
             // Create target instance by using Activator
-            var instanceObj = Activator.CreateInstance(targetType, path, id, requirements);
+            // This should match to the class constructor of TargetBase
+            var instanceObj = Activator.CreateInstance(targetType, path, dest, id, requirements);
             
             // If failed, try using a empty constructor and set properties later
             if (instanceObj is null)
@@ -93,14 +106,16 @@ public class ManifestParser(PluginStore store, string? defaultTargetType=null)
                 
                 // Get properties and set them
                 var propId = targetType.GetProperty("Id");
-                var propPath = targetType.GetProperty("Path");
+                var propPath = targetType.GetProperty("SourcePath");
+                var propDest = targetType.GetProperty("DestinationPath");
                 var propRequirements = targetType.GetProperty("Requirements");
 
-                if (propId is null || propPath is null || propRequirements is null)
+                if (propId is null || propPath is null || propDest is null || propRequirements is null)
                     throw new NotSupportedException($"Target type '{typeId}' does not have required properties.");
                 
                 propId.SetValue(instanceObj, id);
                 propPath.SetValue(instanceObj, path);
+                propDest.SetValue(instanceObj, dest);
                 propRequirements.SetValue(instanceObj, propRequirements);
             }
             

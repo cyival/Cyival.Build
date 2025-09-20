@@ -76,7 +76,7 @@ public sealed class BuildApp : IDisposable
         _environments = environments;
     }
     
-    public TargetBuildApp Build(string? targetId)
+    public TargetBuildApp Build(string? targetId, string outPath)
     {
         if (Manifest is null)
             throw new InvalidOperationException("BuildApp is not initialized. Call Initialize() first.");
@@ -86,24 +86,26 @@ public sealed class BuildApp : IDisposable
                        ?? throw new InvalidOperationException("No default targets or more than one default target defined. Please specify a target to build.");
 
         var buildList = Manifest.GetOrderedTargets(targetId);
-        
-        Console.WriteLine(string.Join(',', buildList));
 
-        if (_builders.Count == 0 || _environments.Count == 0)
+        if (_builders.Count == 0) // TODO: check environment count
             throw new InvalidOperationException();
         
         // check for missing required configuration
         var configurations = GetRequiredConfigurations();
         
+        // TODO: check for whether environment is provided.
+
+        var pathSolver = new PathSolver(Manifest.ManifestPath);
+        
         foreach (var builder in _builders)
         {
-            builder.Setup(_environments, configurations);
+            builder.Setup(pathSolver, outPath, _environments, configurations);
         }
 
         return new TargetBuildApp(buildList, _builders, _environments);
     }
     
-    public ManifestParser CreateManifestParser(string? defaultTargetTypeId=null) => new ManifestParser(_pluginStore, defaultTargetTypeId);
+    public ManifestParser CreateManifestParser(string? defaultTargetTypeId=null) => new(_pluginStore, defaultTargetTypeId);
 
     public List<object> GetRequiredConfigurations()
     {

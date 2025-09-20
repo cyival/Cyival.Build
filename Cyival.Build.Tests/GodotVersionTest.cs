@@ -1,4 +1,6 @@
-﻿namespace Cyival.Build.Tests;
+﻿using Cyival.Build.Plugin.Default.Environment;
+
+namespace Cyival.Build.Tests;
 
 using Xunit;
 using Environment;

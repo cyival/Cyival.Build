@@ -1,6 +1,8 @@
-﻿using Cyival.Build.Configuration;
+﻿using Cyival.Build.Build;
 
-namespace Cyival.Build.Build;
+namespace Cyival.Build.Plugin.Default.Build;
+
+using Configuration;
 
 public class GodotTarget : TargetBase, IBuildTarget
 {
@@ -21,8 +23,8 @@ public class GodotTarget : TargetBase, IBuildTarget
         return default;
     }
 
-    public GodotTarget(string path, string id, IEnumerable<string>? requirements = null)
-        : base(path, id, requirements)
+    public GodotTarget(string path, string dest, string id, IEnumerable<string>? requirements = null)
+         : base(path, dest, id, requirements)
     {
         
     }

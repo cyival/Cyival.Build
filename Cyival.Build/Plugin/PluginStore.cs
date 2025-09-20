@@ -18,6 +18,8 @@ public class PluginStore
     private Dictionary<string, ITargetBuilderBase> _targetBuilders = [];
     
     private Dictionary<string, Type> _targetTypes = [];
+
+    private Dictionary<string, string> _targetTypesBinding = [];
     
     public void ScanAndInitialize(Assembly[] assemblies)
     {
@@ -73,14 +75,20 @@ public class PluginStore
         RegisterConfigurationProvider(id, new T());
     }
     
-    private void RegisterTargetBuilder(string id, ITargetBuilderBase builder)
+    private void RegisterTargetBuilder(string id, ITargetBuilderBase builder, string targetTypeId)
     {
         _targetBuilders.Add(id, builder);
+        _targetTypesBinding[targetTypeId] = id;
+    }
+
+    public void RegisterTargetBuilder<T>(string id, string targetTypeId) where T : ITargetBuilderBase, new()
+    {
+        RegisterTargetBuilder(id, new T(), targetTypeId);
     }
 
     public void RegisterTargetBuilder<T>(string id) where T : ITargetBuilderBase, new()
     {
-        RegisterTargetBuilder(id, new T());
+        RegisterTargetBuilder<T>(id, id);
     }
     
     private void RegisterTargetType(string id, Type type)
@@ -102,7 +110,7 @@ public class PluginStore
 
     public string? GetTargetTypeIdByType(Type type) => _targetTypes.SingleOrDefault(kvp => kvp.Value == type).Key;
     
-    public ITargetBuilderBase GetBuilderByTargetTypeId(string typeId) => _targetBuilders[typeId]; // TODO
+    public ITargetBuilderBase GetBuilderByTargetTypeId(string typeId) => _targetBuilders[_targetTypesBinding[typeId]]; // TODO: handling not found
     
     public Dictionary<string, IConfigurationProviderBase> GetConfigurationProviders() => _configurationProviders;
 

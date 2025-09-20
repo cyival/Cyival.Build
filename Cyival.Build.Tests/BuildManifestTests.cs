@@ -7,7 +7,7 @@ using Build;
 internal class MockBuildTarget : TargetBase, IBuildTarget
 {
     public MockBuildTarget(string id, IEnumerable<string>? requirements=null)
-         : base(string.Empty, id, requirements)
+         : base(string.Empty, string.Empty, id, requirements)
     {
         
     }

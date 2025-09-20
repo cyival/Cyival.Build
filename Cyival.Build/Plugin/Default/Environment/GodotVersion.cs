@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace Cyival.Build.Environment;
+namespace Cyival.Build.Plugin.Default.Environment;
 
 public record GodotVersion(int Major, int Minor, int Patch = 0, 
     GodotChannel Channel = GodotChannel.Stable, int StatusVersion = 0) : IComparable<GodotVersion>

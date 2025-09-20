@@ -2,5 +2,5 @@
 
 public interface ITargetBuilder<out T> : ITargetBuilderBase
 {
-    public virtual bool CanBuild(IBuildTarget target) => target is T;
+    bool ITargetBuilderBase.CanBuild(IBuildTarget target, BuildSettings? buildSettings) => target is T;
 }

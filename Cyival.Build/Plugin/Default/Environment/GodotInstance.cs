@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace Cyival.Build.Environment;
+namespace Cyival.Build.Plugin.Default.Environment;
 
 public partial record struct GodotInstance
 {

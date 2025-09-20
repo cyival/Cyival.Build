@@ -6,7 +6,9 @@ public interface IBuildTarget
 {
     public bool IsDefault { get; set; }
     
-    public string Path { get; }
+    public string SourcePath { get; }
+    
+    public string DestinationPath { get; init; }
     
     public string Id { get; }
     

@@ -8,15 +8,18 @@ public abstract class TargetBase
 {
     public bool IsDefault { get; set; } = false;
     
-    public string Path { get; }
+    public string SourcePath { get; }
+    
+    public string DestinationPath { get; init; }
     
     public string Id { get; }
     
     public List<string> Requirements { get; }
 
-    public TargetBase(string path, string id, IEnumerable<string>? requirements = null)
+    public TargetBase(string path, string dest, string id, IEnumerable<string>? requirements = null)
     {
-        Path = path;
+        SourcePath = path;
+        DestinationPath = dest;
         Id = id;
         Requirements = requirements?.ToList() ?? [];
     }
