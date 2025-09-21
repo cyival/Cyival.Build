@@ -7,6 +7,8 @@ public partial record struct GodotInstance
     public GodotVersion Version { get; private set; }
 
     public string Path;
+
+    public bool Mono { get; private set; }
     
     public GodotInstance(GodotVersion version, string path)
     {
@@ -28,6 +30,7 @@ public partial record struct GodotInstance
 
         Path = path;
         Version = GodotVersion.Parse(versionString);
+        Mono = versionString.Contains("mono") || versionString.Contains("dotnet");
     }
 
     private static string? ValidatePath(string path)
@@ -35,7 +38,11 @@ public partial record struct GodotInstance
         try
         {
             var versionString = "";
-            using var process = Process.Start(path, "--version");
+            var startInfo = new ProcessStartInfo(path, "--version")
+            {
+                RedirectStandardOutput = true
+            };
+            using var process = Process.Start(startInfo);
             
             while (!process.StandardOutput.EndOfStream)
                 versionString += process.StandardOutput.ReadLine();
