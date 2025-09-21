@@ -1,4 +1,5 @@
-﻿using Cyival.Build.Configuration;
+﻿using System.Text.Json;
+using Cyival.Build.Configuration;
 
 namespace Cyival.Build.Plugin.Default.Configuration;
 
@@ -32,5 +33,10 @@ public struct GodotConfiguration
         if (selectMatchOne == default)
             return null;
         return selectMatchOne;
+    }
+
+    public override string ToString()
+    {
+        return JsonSerializer.Serialize(this);
     }
 }

@@ -1,7 +1,9 @@
-﻿using Cyival.Build.Configuration;
+﻿using System.Diagnostics;
+using Cyival.Build.Configuration;
 using Cyival.Build.Environment;
 using Cyival.Build.Build;
 using Cyival.Build.Plugin.Default.Environment;
+using Microsoft.Extensions.Logging;
 
 namespace Cyival.Build.Plugin.Default.Build;
 
@@ -12,6 +14,8 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
     private List<GodotInstance> _godotInstances = [];
 
     private GodotConfiguration _globalGodotConfiguration = new();
+
+    private ILogger _logger = BuildApp.LoggerFactory.CreateLogger<GodotTargetBuilder>();
     
     public BuildResult Build(IBuildTarget target, BuildSettings? buildSettings = null)
     {
@@ -20,9 +24,24 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         if (buildSettings is null)
             buildSettings = BuildSettings.GetCurrentBuildSettings();
         
-        /*var godotInstance = _godotInstances.FirstOrDefault(i => i.Version == buildTarget.GodotVersion) 
-                            ?? _godotInstances.FirstOrDefault(i => i.IsDefault) 
-                            ?? throw new InvalidOperationException("No suitable Godot instance found");*/
+        _logger.LogInformation("Detected godot instances: [{}]", string.Join(',', _godotInstances));
+        _logger.LogInformation("Godot configuration: {}", _globalGodotConfiguration);
+        
+        var godotInstance = _globalGodotConfiguration.SelectMatchOne(_godotInstances)
+                            ?? throw new InvalidOperationException("No matched godot instance available");
+        
+        _logger.LogInformation("Using godot version: {version}; path: {path}", godotInstance.Version, godotInstance.Path);
+        
+        /* exit code = 1: FAILED */
+        
+        var startInfo = new ProcessStartInfo(godotInstance.Path, "--version")
+        {
+            RedirectStandardOutput = true
+        };
+        using var process = Process.Start(startInfo);
+            
+        while (!process.StandardOutput.EndOfStream)
+            Console.Write(process.StandardOutput.ReadLine());
 
         return BuildResult.Failed;
     }
@@ -48,7 +67,7 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         if (godotInstances.Length == 0)
             throw new InvalidOperationException("No Godot instances provided");
         
-        _godotInstances = godotInstances.OrderBy(t => t).ToList();
+        _godotInstances = godotInstances.OrderBy(t => t.Version).ToList();
         
         var godotConfiguration = globalConfiguration.OfType<GodotConfiguration>().ToArray();
         if (godotConfiguration.Length > 0)

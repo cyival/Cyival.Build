@@ -6,8 +6,7 @@ public class GodotSysProvider : IEnvironmentProvider<GodotInstance>
 {
     public IEnumerable<GodotInstance> GetEnvironment()
     {
-        // TODO
-        return [];
+        return [new GodotInstance(System.Environment.GetEnvironmentVariable("GODOT") ?? "")];
     }
 
     public bool CanProvide()

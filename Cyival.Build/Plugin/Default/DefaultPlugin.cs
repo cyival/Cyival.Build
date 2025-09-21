@@ -11,6 +11,7 @@ public class DefaultPlugin : Plugin
     {
         store.RegisterConfigurationProvider<GodotConfigurationProvider>("godot");
         store.RegisterEnvironmentProvider<GodotSysProvider>("godot.system");
+        store.RegisterEnvironmentProvider<GodotEnvProvider>("godot.godotenv");
         store.RegisterTargetBuilder<GodotTargetBuilder>("godot");
         store.RegisterTargetType<GodotTarget>("godot");
         
