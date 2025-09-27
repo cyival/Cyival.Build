@@ -10,11 +10,13 @@ using Environment;
 public struct GodotConfiguration
 {
     // TODO: Make all these into class GodotVersionRange.
-    public required GodotVersion SpecifiedVersion { get; init; }
+    public GodotVersion SpecifiedVersion { get; init; }
     public bool IgnorePatch { get; init; }
     public bool RequiredMono { get; init; }
 
     public Dictionary<BuildSettings.Platform, string> PreferredExportPresets { get; init; } // TODO
+    
+    public bool IsGodotPack { get; set; }
 
     public GodotInstance? SelectMatchOne(IEnumerable<GodotInstance> instances)
     {

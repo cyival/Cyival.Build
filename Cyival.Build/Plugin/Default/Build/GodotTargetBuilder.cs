@@ -29,16 +29,26 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
 
         var from = _pathSolver.GetPathTo(buildTarget.SourcePath);
         var to = _pathSolver.GetPathTo(_outPath, buildTarget.DestinationPath);
+
+        Directory.CreateDirectory(to);
         
         _logger.LogInformation("Detected godot instances: [{}]", string.Join(',', _godotInstances));
-        _logger.LogInformation("Global Godot configuration: {}", _globalGodotConfiguration);
+        _logger.LogDebug("Global Godot configuration: {}", _globalGodotConfiguration);
 
         // Get configuration
-        if (!buildTarget.TryGetLocalConfiguration<GodotConfiguration>(out var configuration))
+        GodotConfiguration configuration;
+        if (!buildTarget.TryGetLocalConfiguration<GodotConfiguration>(out var localConfiguration))
         {
             _logger.LogInformation("No local godot configuration found, using global configuration");
             configuration = _globalGodotConfiguration;
         }
+        else
+            configuration = TypeHelper.MergeStructs(_globalGodotConfiguration, localConfiguration);
+        
+        // Force to use from godot pack
+        configuration.IsGodotPack = localConfiguration.IsGodotPack;
+        
+        _logger.LogDebug("Using godot configuration: {}", configuration);
         
         // Get godot instance for building
         var godotInstance = configuration.SelectMatchOne(_godotInstances)
@@ -49,14 +59,16 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         /* exit code = 1: FAILED */
         // TODO: Redirect output to console.
         
+        // Get export preset
         var presets = GetExportPresets(buildTarget, godotInstance);
         var preset = presets.First(p => p.Value == buildSettings.Value.TargetPlatform).Key;
         _logger.LogInformation("Using export preset: {preset} for platform {platform}", preset, buildSettings.Value.TargetPlatform);
         
         // TODO: support custom output file name (read from buildpresets maybe)
+        var outFileName = configuration.IsGodotPack ? $"{buildTarget.Id}.pck" : GetOutputFileName(buildSettings.Value.TargetPlatform, buildTarget.Id);
         var startInfo = new ProcessStartInfo(godotInstance.Path, ["--headless", 
             "--path", from, 
-            "--export-release", preset, Path.Combine(to, GetOutputFileName(buildSettings.Value.TargetPlatform, buildTarget.Id))])
+            configuration.IsGodotPack ? "--export-pack" : "--export-release", preset, Path.Combine(to, outFileName)])
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
