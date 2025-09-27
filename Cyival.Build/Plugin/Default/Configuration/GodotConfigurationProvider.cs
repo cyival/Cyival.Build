@@ -26,6 +26,7 @@ public class GodotConfigurationProvider : IConfigurationProvider<GodotConfigurat
             SpecifiedVersion = parsedVersion,
             IgnorePatch = ignorePatch,
             RequiredMono = requiredMono,
+            PreferredExportPresets = [],
         };
     }
 }

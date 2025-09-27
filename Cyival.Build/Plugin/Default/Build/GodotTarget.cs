@@ -23,6 +23,21 @@ public class GodotTarget : TargetBase, IBuildTarget
         return default;
     }
 
+    public bool TryGetLocalConfiguration<T>(out T? configuration)
+    {
+        if (typeof(T) == typeof(GodotConfiguration) && _localConfiguration.HasValue)
+        {
+            // I don't know what the fuck is this type casting means.
+            configuration = (T)(object)_localConfiguration;
+
+            return true;
+        }
+
+        configuration = default;
+
+        return false;
+    }
+
     public GodotTarget(string path, string dest, string id, IEnumerable<string>? requirements = null)
          : base(path, dest, id, requirements)
     {

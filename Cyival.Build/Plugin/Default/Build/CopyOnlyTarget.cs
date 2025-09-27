@@ -18,4 +18,9 @@ public class CopyOnlyTarget : TargetBase, IBuildTarget
     {
         throw new NotImplementedException();
     }
+
+    public bool TryGetLocalConfiguration<T>(out T? configuration)
+    {
+        throw new NotImplementedException();
+    }
 }

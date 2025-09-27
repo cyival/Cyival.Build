@@ -18,6 +18,8 @@ public interface IBuildTarget
 
     public T? GetLocalConfiguration<T>();
     
+    public bool TryGetLocalConfiguration<T>(out T? configuration);
+    
     /// <summary>
     /// A custom parser for TOML table to parse local configuration.
     /// </summary>

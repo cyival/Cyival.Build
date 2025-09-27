@@ -10,6 +10,9 @@ namespace Cyival.Build;
 
 public sealed class BuildApp : IDisposable
 {
+    // TODO: make this configurable
+    public const string OutTempDirName = ".cybuild";
+    
     public static ILoggerFactory LoggerFactory { get; set; }
         = NullLoggerFactory.Instance;
     

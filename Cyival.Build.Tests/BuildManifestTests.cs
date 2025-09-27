@@ -21,6 +21,11 @@ internal class MockBuildTarget : TargetBase, IBuildTarget
     {
         throw new NotImplementedException();
     }
+
+    public bool TryGetLocalConfiguration<T>(out T? configuration)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 public class BuildManifestTests

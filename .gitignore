@@ -1,5 +1,8 @@
 bin/
 obj/
+out/
+.godot/
+.cybuild/
 
 .idea/
 .vs/

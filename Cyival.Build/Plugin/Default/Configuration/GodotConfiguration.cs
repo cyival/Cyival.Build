@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using Cyival.Build.Build;
 using Cyival.Build.Configuration;
 
 namespace Cyival.Build.Plugin.Default.Configuration;
@@ -7,9 +9,12 @@ using Environment;
 
 public struct GodotConfiguration
 {
-    public GodotVersion SpecifiedVersion { get; init; }
+    // TODO: Make all these into class GodotVersionRange.
+    public required GodotVersion SpecifiedVersion { get; init; }
     public bool IgnorePatch { get; init; }
     public bool RequiredMono { get; init; }
+
+    public Dictionary<BuildSettings.Platform, string> PreferredExportPresets { get; init; } // TODO
 
     public GodotInstance? SelectMatchOne(IEnumerable<GodotInstance> instances)
     {
@@ -35,6 +40,7 @@ public struct GodotConfiguration
         return selectMatchOne;
     }
 
+    // For debugging
     public override string ToString()
     {
         return JsonSerializer.Serialize(this);

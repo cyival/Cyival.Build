@@ -14,7 +14,15 @@ public class GodotEnvProvider : IEnvironmentProvider<GodotInstance>
         
         try
         {
-            Process.Start("godotenv", "--version");
+            var startInfo = new ProcessStartInfo("godotenv", "--version")
+            {
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            
+            Process.Start(startInfo);
             return true;
         }
         catch

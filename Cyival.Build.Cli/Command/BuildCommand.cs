@@ -52,7 +52,11 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
         AnsiConsole.MarkupLine($"Building {settings.Path}\n");
         
 #if DEBUG
-        BuildApp.LoggerFactory = LoggerFactory.Create(builder => builder.AddAnsiConsole());
+        BuildApp.LoggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.AddAnsiConsole();
+            builder.SetMinimumLevel(LogLevel.Debug);
+        });
 #endif
         
         var stopwatch = Stopwatch.StartNew();

@@ -19,4 +19,7 @@ public class PathSolver
         var rp = Path.Combine([_basePath, .. relativePath]);
         return Path.GetFullPath(rp);
     }
+    
+    public PathSolver GetSubSolver(params string[] relativePath)
+        => new(GetPathTo(relativePath));
 }
