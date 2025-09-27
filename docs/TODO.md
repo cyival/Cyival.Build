@@ -1,7 +1,6 @@
 # TODO
 
 ## Library
-- [*] Refactor: `BuildPluginAttribute` for interfaces -> `PluginAttribute` for single class
 - [ ] Feature: Git repository clone
 - [ ] Feature: Custom targets by Lua/GDScript
 
@@ -19,7 +18,6 @@
 
 ## Document
 
-- [*] Simple tutorial for quick start
 - [ ] Detailed explanation for manifest
 - [ ] Detailed CLI help
 - [ ] Translations for CLI

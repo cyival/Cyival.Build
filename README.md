@@ -35,7 +35,7 @@ type = "godot" # Optional, default is "godot"
 path = "./MyGodotProject"
 ```
 
-You can customize the `build.toml` file further based on your project's needs. For more details, refer to the [documentation](https://github.com/cyival/Cyival.Build).
+You can customize the `build.toml` file further based on your project's needs. For more details, refer to the [documentation](./docs/).
 
 Now you should have a file structure like this:
 
