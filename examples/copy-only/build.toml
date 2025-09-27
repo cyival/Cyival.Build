@@ -1,0 +1,5 @@
+minimal-version = 0.1
+
+[targets.copy]
+type = "copy"
+path = "should-copy"
