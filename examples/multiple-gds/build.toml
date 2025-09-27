@@ -1,0 +1,19 @@
+minimal-version = 0.1
+
+[build.godot]
+version = "4.5"
+
+[targets.loader]
+path = "loader"
+default = true
+requirements = ["pack_A", "pack_B"]
+
+[targets.pack_A]
+path = "pack_A"
+out = "packs"
+godot = { export_pack = true }
+
+[targets.pack_B]
+path = "pack_B"
+out = "packs"
+godot = { export_pack = true }

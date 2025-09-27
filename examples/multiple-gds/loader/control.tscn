@@ -1,0 +1,51 @@
+[gd_scene load_steps=3 format=3 uid="uid://bukh5v13yl2og"]
+
+[ext_resource type="Script" uid="uid://b2q5qgqk04vb" path="res://control.gd" id="1_0fbet"]
+[ext_resource type="Script" uid="uid://miktcem2gik3" path="res://loader.gd" id="2_62e2m"]
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_0fbet")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "This is a pack loader."
+
+[node name="Button" type="Button" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Load Packs"
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TabContainer" type="TabContainer" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TextEdit" type="TextEdit" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+size_flags_vertical = 3
+editable = false
+
+[node name="PackLoader" type="Node" parent="."]
+script = ExtResource("2_62e2m")
+metadata/_custom_type_script = "uid://miktcem2gik3"
+
+[connection signal="pressed" from="HBoxContainer/VBoxContainer/Button" to="." method="_on_button_pressed"]
