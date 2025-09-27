@@ -35,7 +35,8 @@ public class GodotEnvProvider : IEnvironmentProvider<GodotInstance>
 
         // should get a list of full path to executables.
         var exeList = Directory.GetFiles(basePath, "Godot*.exe", SearchOption.AllDirectories)
-            .Where(str => !str.Contains("console")).ToList();
+            .Where(str => !str.Contains("console"))
+            .Where(str => !str.Contains("GodotTools")).ToList();
 
         var instances = new List<GodotInstance>();
         foreach (var exePath in exeList)
