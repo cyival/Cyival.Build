@@ -9,7 +9,7 @@ A build tool for Godot projects.
 
 ## Features
 
-- [*] Detecting Godot installations from system, GodotEnv and ...
+- [x] Detecting Godot installations from system, GodotEnv and ...
 - [ ] Building multiple projects as applications or packs(.pck)
 - [ ] And more!
 
