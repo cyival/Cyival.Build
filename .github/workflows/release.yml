@@ -54,7 +54,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PROJECT_NAME }}-${{ matrix.runtime }}
-          path: dist/${{ matrix.runtime }}.zip
+          path: dist/${{ env.PROJECT_NAME }}-${{ matrix.runtime }}.zip
 
   pack-nuget:
     runs-on: ubuntu-latest
