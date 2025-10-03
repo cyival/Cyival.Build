@@ -3,6 +3,7 @@
 [![Test on Commit](https://github.com/cyival/Cyival.Build/actions/workflows/test.yml/badge.svg)](https://github.com/cyival/Cyival.Build/actions/workflows/test.yml)
 ![NuGet Version](https://img.shields.io/nuget/v/Cyival.Build.Cli)
 ![GitHub License](https://img.shields.io/github/license/cyival/Cyival.Build)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fcyival%2FCyival.Build.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fcyival%2FCyival.Build?ref=badge_shield)
 
 
 A build tool for Godot projects.
@@ -64,3 +65,6 @@ The built application will be located in the `./out` directory by default.
 ## License
 
 **Cyival.Build** is open-source software licensed under the Apache License, Version 2.0
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fcyival%2FCyival.Build.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fcyival%2FCyival.Build?ref=badge_large)
