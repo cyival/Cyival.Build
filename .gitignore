@@ -7,3 +7,4 @@ out/
 .idea/
 .vs/
 .vscode/
+*.user

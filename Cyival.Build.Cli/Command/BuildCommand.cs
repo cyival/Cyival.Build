@@ -4,6 +4,9 @@ using Spectre.Console;
 using Spectre.Console.Cli;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using Cyival.Build.Build;
+using Karambolo.Extensions.Logging.File;
 
 namespace Cyival.Build.Cli.Command;
 
@@ -19,7 +22,13 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
         
         [CommandOption("-o|--out")]
         [DefaultValue("./out")]
-        public required string OutPath { get; set; }
+        public required string OutPath { get; init; }
+
+        [CommandOption("-t|--target")]
+        public string? TargetId { get; init; }
+        
+        [CommandOption("--platform")]
+        public string? PlatformName { get; init; }
     }
 
     private string _basePath = "";
@@ -44,20 +53,34 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
         settings.Path = Path.GetFullPath(settings.Path);
         _basePath = Path.GetDirectoryName(settings.Path) ?? throw new IOException("Failed to get base path from manifest.");
     }
+
+    private static string GetTempDir(Settings settings) => Path.GetFullPath(
+    Path.Combine(settings.Path, "..", settings.OutPath, BuildApp.OutTempDirName)
+        );
     
     public override int Execute(CommandContext context, Settings settings)
     {
         ValidatePath(ref settings);
         
-        AnsiConsole.MarkupLine($"Building {settings.Path}\n");
+        AnsiConsole.MarkupLine($"Building target {settings.TargetId ?? "default"} at {settings.Path}\n");
         
-#if DEBUG
-        BuildApp.LoggerFactory = LoggerFactory.Create(builder =>
+        // Create the temp dir to ensure the log can be written.
+        Directory.CreateDirectory(GetTempDir(settings));
+
+        BuildApp.LoggerFactory = LoggerFactory.Create(builder => 
         {
+            builder.AddFile(o =>
+            {
+                o.RootPath = GetTempDir(settings);
+                o.Files = [new LogFileOptions { Path = "build.log" }];
+            });
+#if DEBUG
             builder.AddAnsiConsole();
             builder.SetMinimumLevel(LogLevel.Debug);
-        });
 #endif
+        });
+
+        BuildApp.ConsoleRedirector = new AnsiConsoleRedirector();
         
         var stopwatch = Stopwatch.StartNew();
         
@@ -68,12 +91,12 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
 
         if (_isBuildOkay)
         {
-            AnsiConsole.MarkupLine($"\n[green]Build completed[/] in {stopwatch.Elapsed.TotalSeconds:0.##}s.");
+            AnsiConsole.MarkupLine($"[green]Build completed[/] in {stopwatch.Elapsed.TotalSeconds:0.##}s.");
             
             return 0;
         }
         
-        AnsiConsole.MarkupLine($"\n[red]Build failed[/] in {stopwatch.Elapsed.TotalSeconds:0.##}s.");
+        AnsiConsole.MarkupLine($"[red]Build failed[/] in {stopwatch.Elapsed.TotalSeconds:0.##}s.");
 
         return -1;
         
@@ -81,7 +104,13 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
 
     private void Build(StatusContext ctx, Settings settings)
     {
-        using var app = new BuildApp();
+        var buildSettings = new BuildSettings(settings.OutPath, _basePath)
+        {
+            TargetArchitecture = RuntimeInformation.OSArchitecture,
+            TargetPlatform = BuildSettings.GetCurrentPlatform(),
+        };
+        
+        using var app = new BuildApp(buildSettings);
         app.InitializePlugins();
         AnsiConsole.Markup(":check_mark:  Initialized plugins.\n");
                 
@@ -100,7 +129,7 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
         app.CollectItems();
 
         ctx.Status("Building...");
-        var buildApp = app.Build(null, settings.OutPath);
+        var buildApp = app.Build(settings.TargetId, settings.OutPath);
 
         while (!buildApp.IsBuildAllDone() && !buildApp.IsAnyError())
         {
@@ -109,10 +138,14 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
             if (next is not {} buildContext)
                 break;
                     
-            AnsiConsole.MarkupLine($"   Building target: [yellow bold]{buildContext.TargetId}[/]");
+            AnsiConsole.MarkupLine($"   Building target [yellow bold]{buildContext.TargetId}[/]");
+            AnsiConsole.WriteLine(); // Use `\n` seems will cause a weird output, so I used `WriteLine()` instead.
             ctx.Status($"Building ... ({buildApp.GetCurrentIndex() + 1} of {buildApp.GetTotalTargets()})");
 
             buildContext.Build();
+            
+            AnsiConsole.MarkupLine($"   Successfully built [yellow bold]{buildContext.TargetId}[/]");
+            AnsiConsole.WriteLine();
         }
 
         _isBuildOkay = !buildApp.IsAnyError();

@@ -8,13 +8,16 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Cyival.Build;
 
-public sealed class BuildApp : IDisposable
+public sealed class BuildApp(BuildSettings settings) : IDisposable
 {
     // TODO: make this configurable
     public const string OutTempDirName = ".cybuild";
     
     public static ILoggerFactory LoggerFactory { get; set; }
         = NullLoggerFactory.Instance;
+
+    public static IConsoleRedirector ConsoleRedirector { get; set; }
+        = new EmptyConsoleRedirector();
     
     private ILogger<BuildApp> _logger = LoggerFactory.CreateLogger<BuildApp>();
 
@@ -102,10 +105,10 @@ public sealed class BuildApp : IDisposable
         
         foreach (var builder in _builders)
         {
-            builder.Setup(pathSolver, outPath, _environments, configurations);
+            builder.Setup(_environments, configurations);
         }
 
-        return new TargetBuildApp(buildList, _builders, _environments);
+        return new TargetBuildApp(buildList, _builders, _environments, settings);
     }
     
     public ManifestParser CreateManifestParser(string? defaultTargetTypeId=null) => new(_pluginStore, defaultTargetTypeId);

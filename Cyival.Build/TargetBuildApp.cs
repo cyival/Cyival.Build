@@ -3,7 +3,11 @@ using Cyival.Build.Plugin;
 
 namespace Cyival.Build;
 
-public class TargetBuildApp(IReadOnlyList<IBuildTarget> targets, IEnumerable<ITargetBuilderBase> builders, IEnumerable<object> environments)
+public class TargetBuildApp(
+    IReadOnlyList<IBuildTarget> targets, 
+    IEnumerable<ITargetBuilderBase> builders, 
+    IEnumerable<object> environments, 
+    BuildSettings settings)
 {
     private readonly List<IBuildTarget> _targets = targets.ToList();
     private readonly HashSet<ITargetBuilderBase> _builders = builders.ToHashSet();
@@ -24,7 +28,7 @@ public class TargetBuildApp(IReadOnlyList<IBuildTarget> targets, IEnumerable<ITa
         
         // Initializes the build context
         // Builders are already filtered in CollectItems, so there must be at least one builder that can build the target
-        var context = new BuildContext(this, target, builders.First(b => b.CanBuild(target)))
+        var context = new BuildContext(this, target, builders.First(b => b.CanBuild(target, settings)), settings)
         {
             TargetType = target.GetType().ToString(), // TODO
         };
@@ -39,7 +43,7 @@ public class TargetBuildApp(IReadOnlyList<IBuildTarget> targets, IEnumerable<ITa
 
     public bool IsAnyError() => _buildResults.Any(r => r.Value == BuildResult.Failed);
     
-    public struct BuildContext(TargetBuildApp app, IBuildTarget target, ITargetBuilderBase targetBuilder)
+    public struct BuildContext(TargetBuildApp app, IBuildTarget target, ITargetBuilderBase targetBuilder, BuildSettings settings)
     {
         public string TargetId => target.Id;
         public IEnumerable<string> Requirements => target.Requirements;
@@ -52,7 +56,14 @@ public class TargetBuildApp(IReadOnlyList<IBuildTarget> targets, IEnumerable<ITa
                 throw new InvalidOperationException("Cannot build target before its requirements are built.");
             }
 
-            var result = targetBuilder.Build(target);
+            var settingsPerformed = settings with
+            {
+                SourcePathSolver = settings.ManifestDirSolver.GetSubSolver(target.SourcePath),
+                DestinationPathSolver = settings.OutPathSolver.GetSubSolver(target.DestinationPath),
+                CurrentBuildingTarget = target.Id,
+            };
+            
+            var result = targetBuilder.Build(target, settingsPerformed);
 
             if (result == BuildResult.Failed)
                 throw new Exception("Failed to build target " + TargetId);

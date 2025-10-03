@@ -8,27 +8,25 @@ using Configuration;
 public class CopyOnlyTargetBuilder : ITargetBuilder<CopyOnlyTarget>
 {
     private CopyOnlyConfiguration _configuration;
-    private PathSolver _pathSolver;
     private ILogger _logger = BuildApp.LoggerFactory.CreateLogger<CopyOnlyTargetBuilder>();
-
-    private string _outPath;
     
     public Type[] GetRequiredEnvironmentTypes() => [];
 
     public Type[] GetRequiredConfigurationTypes() => [typeof(CopyOnlyConfiguration)];
 
-    public void Setup(PathSolver pathSolver, string outPath, IEnumerable<object> environment,
+    public void Setup(IEnumerable<object> environment,
         IEnumerable<object> configuration)
     {
         _configuration = configuration.OfType<CopyOnlyConfiguration>().First();
-        _pathSolver = pathSolver;
-        _outPath = outPath;
     }
 
-    public BuildResult Build(IBuildTarget target, BuildSettings? buildSettings = null)
+    public BuildResult Build(IBuildTarget target, BuildSettings buildSettings)
     {
-        var from = _pathSolver.GetPathTo(target.SourcePath);
-        var dest = _pathSolver.GetPathTo(_outPath, target.DestinationPath);
+        if (!buildSettings.IsBuilding(target))
+            throw new InvalidOperationException("Invalid settings provided.");
+
+        var from = buildSettings.GlobalSourcePath;
+        var dest = buildSettings.GlobalDestinationPath;
         
         _logger.LogDebug("Src -> {f}, Dest -> {d}", from, dest);
 

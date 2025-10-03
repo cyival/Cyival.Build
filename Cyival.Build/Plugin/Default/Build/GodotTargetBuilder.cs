@@ -16,19 +16,17 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
 
     private GodotConfiguration _globalGodotConfiguration;
 
-    private PathSolver _pathSolver;
-    private string _outPath;
-    private ILogger _logger = BuildApp.LoggerFactory.CreateLogger<GodotTargetBuilder>();
+    private readonly ILogger _logger = BuildApp.LoggerFactory.CreateLogger<GodotTargetBuilder>();
     
-    public BuildResult Build(IBuildTarget target, BuildSettings? buildSettings = null)
+    public BuildResult Build(IBuildTarget target, BuildSettings buildSettings)
     {
-        var buildTarget = target as GodotTarget ?? throw new InvalidOperationException("Target is not a GodotTarget");
+        if (!buildSettings.IsBuilding(target))
+            throw new InvalidOperationException("Invalid settings provided.");
         
-        if (buildSettings is null)
-            buildSettings = BuildSettings.GetCurrentBuildSettings();
+        var buildTarget = target as GodotTarget ?? throw new InvalidOperationException("Target is not a GodotTarget");
 
-        var from = _pathSolver.GetPathTo(buildTarget.SourcePath);
-        var to = _pathSolver.GetPathTo(_outPath, buildTarget.DestinationPath);
+        var from = buildSettings.GlobalSourcePath;
+        var to = buildSettings.GlobalDestinationPath;
 
         Directory.CreateDirectory(to);
         
@@ -56,16 +54,13 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         
         _logger.LogInformation("Using godot version: {version}; path: {path}", godotInstance.Version, godotInstance.Path);
         
-        /* exit code = 1: FAILED */
-        // TODO: Redirect output to console.
-        
         // Get export preset
-        var presets = GetExportPresets(buildTarget, godotInstance);
-        var preset = presets.First(p => p.Value == buildSettings.Value.TargetPlatform).Key;
-        _logger.LogInformation("Using export preset: {preset} for platform {platform}", preset, buildSettings.Value.TargetPlatform);
+        var presets = GetExportPresets(buildSettings, buildTarget, godotInstance);
+        var preset = presets.First(p => p.Value == buildSettings.TargetPlatform).Key;
+        _logger.LogInformation("Using export preset: {preset} for platform {platform}", preset, buildSettings.TargetPlatform);
         
         // TODO: support custom output file name (read from buildpresets maybe)
-        var outFileName = configuration.IsGodotPack ? $"{buildTarget.Id}.pck" : GetOutputFileName(buildSettings.Value.TargetPlatform, buildTarget.Id);
+        var outFileName = configuration.IsGodotPack ? $"{buildTarget.Id}.pck" : GetOutputFileName(buildSettings.TargetPlatform, buildTarget.Id);
         var startInfo = new ProcessStartInfo(godotInstance.Path, ["--headless", 
             "--path", from, 
             configuration.IsGodotPack ? "--export-pack" : "--export-release", preset, Path.Combine(to, outFileName)])
@@ -83,7 +78,8 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
             var line = process.StandardOutput.ReadLine();
             if (string.IsNullOrEmpty(line)) continue;
             
-            _logger.LogDebug("{}", line);
+            _logger.LogTrace("{}", line);
+            BuildApp.ConsoleRedirector.WriteLine(line);
         }
 
         process.WaitForExit();
@@ -103,14 +99,14 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         return BuildResult.Success;
     }
 
-    private Dictionary<string, BuildSettings.Platform> GetExportPresets(GodotTarget target, GodotInstance instance)
+    private Dictionary<string, BuildSettings.Platform> GetExportPresets(BuildSettings settings, GodotTarget target, GodotInstance instance)
     {
-        var presetPath = _pathSolver.GetPathTo(target.SourcePath, "export_presets.cfg");
+        var presetPath = settings.SourcePathSolver.GetPathTo("export_presets.cfg");
 
         if (!File.Exists(presetPath))
             throw new FileNotFoundException("Could not find export_presets.cfg", presetPath);
 
-        var rawData = GodotConfigConverter.ConvertByGodotInstance(_pathSolver.GetSubSolver(_outPath), instance, presetPath)
+        var rawData = GodotConfigConverter.ConvertByGodotInstance(settings.OutPathSolver, instance, presetPath)
             ?? throw new InvalidDataException("Failed to parse export_presets.cfg");
 
         var result = new Dictionary<string, BuildSettings.Platform>();
@@ -165,12 +161,10 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
     /// <summary>
     /// Set up the builder with specified environment and global configurations.
     /// </summary>
-    /// <param name="pathSolver"></param>
-    /// <param name="outPath"></param>
     /// <param name="environment"></param>
     /// <param name="globalConfiguration"></param>
     /// <exception cref="InvalidOperationException"></exception>
-    public void Setup(PathSolver pathSolver, string outPath, IEnumerable<object> environment,
+    public void Setup(IEnumerable<object> environment,
         IEnumerable<object> globalConfiguration)
     {
         var instances = environment.OfType<GodotInstance>();
@@ -183,8 +177,5 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         var godotConfiguration = globalConfiguration.OfType<GodotConfiguration>().ToArray();
         if (godotConfiguration.Length > 0)
             _globalGodotConfiguration = godotConfiguration.First();
-
-        _pathSolver = pathSolver;
-        _outPath = outPath;
     }
 }
