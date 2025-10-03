@@ -76,7 +76,8 @@ public class ManifestParser(PluginStore store, string? defaultTargetType=null)
             
             // Read generic properties
             var path = targetTable.TryGetValue("path", out var pathObj) ? pathObj.ToString() : null;
-            var dest = targetTable.TryGetValue("out", out var destPathObj) ? destPathObj.ToString() : string.Empty;
+            var dest = targetTable.TryGetValue("output", out var destPathObj) ? destPathObj.ToString() : 
+                    targetTable.TryGetValue("out", out var destPathObj2) ? destPathObj2.ToString() : string.Empty;
             var requirements = targetTable.TryGetValue("requirements", out var reqObj)
                 ? ((TomlArray)reqObj).Select(r => r?.ToString() ?? string.Empty).Where(r => !string.IsNullOrEmpty(r)).ToList()
                 : [];
