@@ -21,7 +21,9 @@ public sealed class CleanCommand : Command<CleanCommand.Settings>
     public override int Execute(CommandContext context, Settings settings)
     {
         var tempDirectories = Directory.GetDirectories(settings.Path, ".cybuild", SearchOption.AllDirectories);
-        var directories = tempDirectories.Select(dir => Path.GetFullPath(Path.Combine(dir, "..")));
+        var directories = tempDirectories
+            .Where(dir => !File.Exists(Path.Combine(dir, ".no_clean")))
+            .Select(dir => Path.GetFullPath(Path.Combine(dir, "..")));
 
         foreach (var dir in directories)
         {
