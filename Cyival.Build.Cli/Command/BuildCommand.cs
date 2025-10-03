@@ -30,6 +30,10 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
         
         [CommandOption("--platform <PLATFORM>")]
         public string? PlatformName { get; init; }
+
+        [CommandOption("--mode <MODE>")]
+        [DefaultValue(BuildSettings.Mode.Debug)]
+        public BuildSettings.Mode BuildMode { get; init; }
     }
 
     private string _basePath = "";
@@ -109,6 +113,7 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
         {
             TargetArchitecture = RuntimeInformation.OSArchitecture,
             TargetPlatform = BuildSettings.GetCurrentPlatform(),
+            BuildMode = settings.BuildMode,
         };
         
         using var app = new BuildApp(buildSettings);

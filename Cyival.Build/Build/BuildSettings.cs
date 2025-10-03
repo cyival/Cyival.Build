@@ -8,6 +8,8 @@ public struct BuildSettings(string outPath, string manifestDir)
     
     public required Platform TargetPlatform;
 
+    public required Mode BuildMode;
+    
     public PathSolver OutPathSolver = new PathSolver(outPath);
 
     public PathSolver ManifestDirSolver = new PathSolver(manifestDir);
@@ -52,5 +54,11 @@ public struct BuildSettings(string outPath, string manifestDir)
         iOS,
         Web,*/
         // TODO: Support for other platforms (especially mobile and web)
+    }
+
+    public enum Mode
+    {
+        Release,
+        Debug,
     }
 }

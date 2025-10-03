@@ -43,7 +43,7 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         else
             configuration = TypeHelper.MergeStructs(_globalGodotConfiguration, localConfiguration);
         
-        // Force to use from godot pack
+        // Force to use from local configuration
         configuration.IsGodotPack = localConfiguration.IsGodotPack;
         
         _logger.LogDebug("Using godot configuration: {}", configuration);
@@ -61,6 +61,16 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         
         // TODO: support custom output file name (read from buildpresets maybe)
         var outFileName = configuration.IsGodotPack ? $"{buildTarget.Id}.pck" : GetOutputFileName(buildSettings.TargetPlatform, buildTarget.Id);
+
+        var exportArgName = configuration.IsGodotPack
+            ? "--export-pack"
+            : buildSettings.BuildMode switch
+            {
+                BuildSettings.Mode.Debug => "--export-debug",
+                BuildSettings.Mode.Release => "--export-release",
+                _ => throw new NotSupportedException(),
+            }; 
+        
         var startInfo = new ProcessStartInfo(godotInstance.Path, ["--headless", 
             "--path", from, 
             configuration.IsGodotPack ? "--export-pack" : "--export-release", preset, Path.Combine(to, outFileName)])
@@ -73,6 +83,7 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         using var process = Process.Start(startInfo)
             ?? throw new InvalidOperationException("Failed to start godot process");
 
+        // FIXME: issue #2
         while (!process.StandardOutput.EndOfStream)
         {
             var line = process.StandardOutput.ReadLine();
