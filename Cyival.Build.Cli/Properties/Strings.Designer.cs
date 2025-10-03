@@ -58,5 +58,32 @@ namespace Cyival.Build.Cli.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A subcommand same as no subcommand..
+        /// </summary>
+        internal static string help_build_command {
+            get {
+                return ResourceManager.GetString("help.build.command", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Delete EVERYTHING without confirmation..
+        /// </summary>
+        internal static string help_clean_agreeall {
+            get {
+                return ResourceManager.GetString("help.clean.agreeall", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Clean output directories.
+        /// </summary>
+        internal static string help_clean_command {
+            get {
+                return ResourceManager.GetString("help.clean.command", resourceCulture);
+            }
+        }
     }
 }

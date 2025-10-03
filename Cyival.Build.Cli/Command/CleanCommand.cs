@@ -4,6 +4,7 @@ using Spectre.Console.Cli;
 
 namespace Cyival.Build.Cli.Command;
 
+[Description("Delete EVERYTHING without confirmation.")]
 public sealed class CleanCommand : Command<CleanCommand.Settings>
 {
     public sealed class Settings : CommandSettings
@@ -13,7 +14,7 @@ public sealed class CleanCommand : Command<CleanCommand.Settings>
         public required string Path { get; set; }
 
         [CommandOption("-y")]
-        [Description("Delete EVERYTHING without confirmation.")]
+        [Description("Clean output directories")]
         public bool AgreeAll { get; init; }
     }
 

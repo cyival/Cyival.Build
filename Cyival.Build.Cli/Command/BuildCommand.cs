@@ -12,6 +12,7 @@ namespace Cyival.Build.Cli.Command;
 
 using Utils;
 
+[Description("A subcommand same as no subcommand.")]
 public sealed class BuildCommand : Command<BuildCommand.Settings>
 {
     public sealed class Settings : CommandSettings
@@ -20,14 +21,14 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
         [DefaultValue("./build.toml")]
         public required string Path { get; set; }
         
-        [CommandOption("-o|--out")]
+        [CommandOption("-o|--out <PATH>")]
         [DefaultValue("./out")]
         public required string OutPath { get; init; }
 
-        [CommandOption("-t|--target")]
+        [CommandOption("-t|--target <ID>")]
         public string? TargetId { get; init; }
         
-        [CommandOption("--platform")]
+        [CommandOption("--platform <PLATFORM>")]
         public string? PlatformName { get; init; }
     }
 
