@@ -13,7 +13,7 @@
         <Description>An automated build tool provided for multiple Godot projects.</Description>
         <PackageTags>cli, build</PackageTags>
         
-        <Version>0.1.0</Version>
+        <Version>0.1.1</Version>
         
         <PackAsTool>true</PackAsTool>
         <ToolCommandName>cybuild</ToolCommandName>
