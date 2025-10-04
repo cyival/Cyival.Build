@@ -25,10 +25,8 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         
         var buildTarget = target as GodotTarget ?? throw new InvalidOperationException("Target is not a GodotTarget");
 
-        var from = buildSettings.GlobalSourcePath;
-        var to = buildSettings.GlobalDestinationPath;
-
-        Directory.CreateDirectory(to);
+        // Make sure it's existed
+        Directory.CreateDirectory(buildSettings.GlobalDestinationPath);
         
         _logger.LogInformation("Detected godot instances: [{}]", string.Join(',', _godotInstances));
         _logger.LogDebug("Global Godot configuration: {}", _globalGodotConfiguration);
@@ -53,15 +51,28 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
                             ?? throw new InvalidOperationException("No matched godot instance available");
         
         _logger.LogInformation("Using godot version: {version}; path: {path}", godotInstance.Version, godotInstance.Path);
-        
+
+        return RunProcess(godotInstance,
+            buildTarget,
+            buildSettings,
+            configuration);
+    }
+
+    private BuildResult RunProcess(
+        GodotInstance instance,
+        GodotTarget target, 
+        BuildSettings buildSettings, 
+        GodotConfiguration configuration)
+    {
         // Get export preset
-        var presets = GetExportPresets(buildSettings, buildTarget, godotInstance);
+        var presets = GetExportPresets(buildSettings, target, instance);
         var preset = presets.First(p => p.Value == buildSettings.TargetPlatform).Key;
         _logger.LogInformation("Using export preset: {preset} for platform {platform}", preset, buildSettings.TargetPlatform);
         
-        // TODO: support custom output file name (read from buildpresets maybe)
-        var outFileName = configuration.IsGodotPack ? $"{buildTarget.Id}.pck" : GetOutputFileName(buildSettings.TargetPlatform, buildTarget.Id);
-
+        // TODO: support custom output file name (read from export presets maybe)
+        var outFileName = configuration.IsGodotPack ? $"{target.Id}.pck" : GetOutputFileName(buildSettings.TargetPlatform, target.Id);
+        var outPath = Path.Combine(buildSettings.GlobalDestinationPath, outFileName);
+        
         var exportArgName = configuration.IsGodotPack
             ? "--export-pack"
             : buildSettings.BuildMode switch
@@ -69,38 +80,56 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
                 BuildSettings.Mode.Debug => "--export-debug",
                 BuildSettings.Mode.Release => "--export-release",
                 _ => throw new NotSupportedException(),
-            }; 
-        
-        var startInfo = new ProcessStartInfo(godotInstance.Path, ["--headless", 
-            "--path", from, 
-            configuration.IsGodotPack ? "--export-pack" : "--export-release", preset, Path.Combine(to, outFileName)])
+            };
+
+        var startInfo = new ProcessStartInfo(instance.Path, ["--headless", 
+            "--path", buildSettings.GlobalSourcePath,
+            exportArgName, preset, outPath])
         {
+            UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
         };
-        _logger.LogInformation("Running command: {filename} {arguments}", startInfo.FileName, string.Join(' ', startInfo.ArgumentList));
         
-        using var process = Process.Start(startInfo)
-            ?? throw new InvalidOperationException("Failed to start godot process");
-
-        // FIXME: issue #2
-        while (!process.StandardOutput.EndOfStream)
+        // stdout & stderr
+        var stdout = "";
+        var stderr = "";
+        
+        using var process = new Process();
+        process.StartInfo = startInfo;
+        process.OutputDataReceived += (sender, args) =>
         {
-            var line = process.StandardOutput.ReadLine();
-            if (string.IsNullOrEmpty(line)) continue;
+            if (string.IsNullOrEmpty(args.Data)) return;
+
+            _logger.LogTrace("{}", args.Data);
+            stdout += args.Data;
+            BuildApp.ConsoleRedirector.WriteLine(args.Data);
+        };
+        process.ErrorDataReceived += (sender, args) =>
+        {
+            if (string.IsNullOrEmpty(args.Data)) return;
             
-            _logger.LogTrace("{}", line);
-            BuildApp.ConsoleRedirector.WriteLine(line);
-        }
+            _logger.LogError("{}", args.Data);
+            stderr += args.Data;
+            #if !DEBUG
+            BuildApp.ConsoleRedirector.WriteLine(args.Data);
+            #endif
+        };
+
+        _logger.LogInformation("Running command: {filename} {arguments}", startInfo.FileName, string.Join(' ', startInfo.ArgumentList));
+        process.Start();
+        
+        // To avoid deadlocks, use an asynchronous read operation on at least one of the streams.
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
 
         process.WaitForExit();
-
-        var stderr = process.StandardError.ReadToEnd();
         
         _logger.LogInformation("Godot process exited with code {code}", process.ExitCode);
-        _logger.LogInformation("STDOUT: {}", process.StandardOutput.ReadToEnd());
+        //_logger.LogTrace("STDOUT: {}", stdout);
+        File.WriteAllText(buildSettings.OutTempPathSolver.GetPathTo("stdout.txt") ,stdout);
         _logger.LogInformation("STDERR: {}", stderr);
-
+        
         if (process.ExitCode != 0)
             return BuildResult.Failed;
 
