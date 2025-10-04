@@ -18,6 +18,12 @@ public struct GodotConfiguration
     
     public bool IsGodotPack { get; set; }
 
+    public bool CopySharpArtifacts { get; set; }
+    
+    public string[] CopyArtifactsFilter { get; set; }
+
+    public string? CopyArtifactsTo { get; set; }
+
     public GodotInstance? SelectMatchOne(IEnumerable<GodotInstance> instances)
     {
         var ver = SpecifiedVersion;

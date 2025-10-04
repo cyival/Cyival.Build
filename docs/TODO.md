@@ -17,6 +17,7 @@
 - [ ] Feature: Command `run`
 - [ ] Feature: Command `clean`
 - [ ] Optional Feature: Installing Godot Instance via GodotEnv
+- [ ] Refactor: Replace `Spectre.Console`
 
 ## Document
 

@@ -39,10 +39,15 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
             configuration = _globalGodotConfiguration;
         }
         else
+        {
+            _logger.LogDebug("Local Godot configuration: {}", localConfiguration);
             configuration = TypeHelper.MergeStructs(_globalGodotConfiguration, localConfiguration);
-        
-        // Force to use from local configuration
-        configuration.IsGodotPack = localConfiguration.IsGodotPack;
+                    
+            // Force to use from local configuration
+            configuration.IsGodotPack = localConfiguration.IsGodotPack;
+            configuration.CopySharpArtifacts = localConfiguration.CopySharpArtifacts;
+            configuration.CopyArtifactsTo = localConfiguration.CopyArtifactsTo;
+        }
         
         _logger.LogDebug("Using godot configuration: {}", configuration);
         
@@ -130,6 +135,10 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         File.WriteAllText(buildSettings.OutTempPathSolver.GetPathTo("stdout.txt") ,stdout);
         _logger.LogInformation("STDERR: {}", stderr);
         
+        // Copy dlls for godot pack
+        if (configuration.CopySharpArtifacts && Directory.GetFiles(buildSettings.GlobalSourcePath, "*.csproj").Length != 0)
+            CopySharpArtifacts(target, buildSettings, configuration);
+
         if (process.ExitCode != 0)
             return BuildResult.Failed;
 
@@ -137,6 +146,43 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
             return BuildResult.Warning;
         
         return BuildResult.Success;
+    }
+
+    private void CopySharpArtifacts(IBuildTarget target, BuildSettings buildSettings, GodotConfiguration configuration)
+    {
+        _logger.LogInformation("Copying Dlls");
+        
+        var filters = configuration.CopyArtifactsFilter;
+        if (filters.Length == 0)
+            filters = Directory.GetFiles(buildSettings.GlobalSourcePath, "*.csproj", SearchOption.AllDirectories)
+                .Select(d => (Path.GetFileNameWithoutExtension(d) ?? throw new NullReferenceException()) + ".dll")
+                .ToArray();
+
+        var binPath = buildSettings.SourcePathSolver.GetPathTo(".godot", "mono", "temp", "bin");
+
+        // TODO
+        binPath = Path.Combine(binPath, buildSettings.BuildMode switch
+        {
+            BuildSettings.Mode.Debug => "Debug",
+            BuildSettings.Mode.Release => "Release",
+            _ => throw new NotSupportedException(),
+        });
+
+        var objs = new HashSet<string>();
+        foreach (var f in filters)
+        {
+            objs.UnionWith(Directory.GetFiles(binPath, f));
+        }
+
+        var dest = buildSettings.OutPathSolver.GetPathTo(configuration.CopyArtifactsTo ?? "");
+        Directory.CreateDirectory(dest);
+        
+        foreach (var obj in objs)
+        {
+            var to = Path.Combine(dest, Path.GetFileName(obj));
+            _logger.LogInformation("Copying {src} -> {dest}", obj, to);
+            File.Copy(obj, to);
+        }
     }
 
     private Dictionary<string, BuildSettings.Platform> GetExportPresets(BuildSettings settings, GodotTarget target, GodotInstance instance)

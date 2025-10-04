@@ -18,7 +18,7 @@ public class PathSolver
     {
         var baseRp = Path.Combine(relativePath);
 
-        if (Path.IsPathRooted(baseRp))
+        if (Path.IsPathFullyQualified(baseRp))
             return baseRp;
         
         var rp = Path.Combine(_basePath, baseRp);
