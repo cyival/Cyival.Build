@@ -1,10 +1,14 @@
-﻿using Cyival.Build;
+﻿using System.Text;
+using Cyival.Build;
 using Cyival.Build.Cli.Command;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
 var version = typeof(BuildApp).Assembly.GetName().Version;
+
+Console.OutputEncoding = Encoding.UTF8;
+Console.InputEncoding = Encoding.UTF8;
 
 AnsiConsole.MarkupLine($"[yellow]Cyival.Build[/] [dim]v{version}[/]\n");
 
