@@ -181,7 +181,7 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         {
             var to = Path.Combine(dest, Path.GetFileName(obj));
             _logger.LogInformation("Copying {src} -> {dest}", obj, to);
-            File.Copy(obj, to);
+            File.Copy(obj, to, true);
         }
     }
 
