@@ -51,10 +51,10 @@ Now you should have a file structure like this:
 And then you can build your project by running the following command:
 
 ```bash
-cybuild build ./MyGodotProject
+cybuild build
 ```
 
-Or by simply if you are in the project directory:
+Or by simply:
 
 ```bash
 cybuild
