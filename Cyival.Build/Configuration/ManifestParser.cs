@@ -147,10 +147,33 @@ public class ManifestParser(PluginStore store, string? defaultTargetType=null)
         foreach (var id in configProviders.Keys.Where(table.ContainsKey))
         {
             var provider = configProviders[id];
+            var data = ParseDictionary((TomlTable)table[id]);
             
-            list.Add(provider.ParseFromTableAsObject((TomlTable)table[id]));
+            list.Add(provider.ParseAsObject(data));
         }
 
         return list;
+    }
+    
+    private Dictionary<string, object> ParseDictionary(TomlTable table)
+    {
+        var dict = new Dictionary<string, object>();
+        
+        foreach (var (key, value) in table)
+        {
+            if (value is TomlTable nestedTable)
+            {
+                dict[key] = ParseDictionary(nestedTable);
+                continue;
+            }
+
+            if (value is TomlArray array)
+            {
+                dict[key] = array.ToArray();
+            }
+            dict[key] = value;
+        }
+
+        return dict;
     }
 }
