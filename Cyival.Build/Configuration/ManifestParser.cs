@@ -55,15 +55,22 @@ public class ManifestParser(PluginStore store, string? defaultTargetType=null)
         // Parse global configurations if any
         if (model.TryGetValue("build", out var objBuild) && objBuild is TomlTable buildTable)
         {
-            globalConfigurations = ParseConfiguration(buildTable);
+            globalConfigurations = ParseConfiguration(ParseTableAsDictionary(buildTable));
         }
 
-        return new BuildManifest()
+        var manifest = new BuildManifest()
         {
             BuildTargets = targets,
             GlobalConfigurations = globalConfigurations,
             ManifestPath = manifestPath,
         };
+
+        foreach (var preconfigurator in _pluginStore.GetPreconfigurators())
+        {
+            preconfigurator.PreconfigureConfigurations(ref manifest);
+        }
+        
+        return manifest;
     }
 
     private List<IBuildTarget> ParseTargets(TomlTable table)
@@ -72,18 +79,22 @@ public class ManifestParser(PluginStore store, string? defaultTargetType=null)
         
         foreach (var (id, value) in table)
         {
-            var targetTable = (TomlTable)value;
+            var targetData = ParseTableAsDictionary((TomlTable)value);
+            foreach (var preconfigurator in _pluginStore.GetPreconfigurators())
+            {
+                preconfigurator.PreconfigureTargets(ref targetData);
+            }
             
             // Read generic properties
-            var path = targetTable.TryGetValue("path", out var pathObj) ? pathObj.ToString() : null;
-            var dest = targetTable.TryGetValue("output", out var destPathObj) ? destPathObj.ToString() : 
-                    targetTable.TryGetValue("out", out var destPathObj2) ? destPathObj2.ToString() : string.Empty;
-            var requirements = targetTable.TryGetValue("requirements", out var reqObj)
+            var path = targetData.TryGetValue("path", out var pathObj) ? pathObj.ToString() : null;
+            var dest = targetData.TryGetValue("output", out var destPathObj) ? destPathObj.ToString() : 
+                    targetData.TryGetValue("out", out var destPathObj2) ? destPathObj2.ToString() : string.Empty;
+            var requirements = targetData.TryGetValue("requirements", out var reqObj)
                 ? ((TomlArray)reqObj).Select(r => r?.ToString() ?? string.Empty).Where(r => !string.IsNullOrEmpty(r)).ToList()
                 : [];
-            var typeId = (targetTable.TryGetValue("type", out var typeObj) ? typeObj?.ToString() : defaultTargetType)
+            var typeId = (targetData.TryGetValue("type", out var typeObj) ? typeObj?.ToString() : defaultTargetType)
                        ?? throw new NotSupportedException("Cannot determine target type.");
-            var isDefault = targetTable.TryGetValue("default", out var defaultObj) && defaultObj is true; // defaults to be false
+            var isDefault = targetData.TryGetValue("default", out var defaultObj) && defaultObj is true; // defaults to be false
             
             // Check for required properties
             if (string.IsNullOrWhiteSpace(id))
@@ -127,10 +138,10 @@ public class ManifestParser(PluginStore store, string? defaultTargetType=null)
             target.IsDefault = isDefault;
             
             // Don't forget to let the target parse itself from the table
-            target.ParseFromTable(targetTable);
+            target.Parse(targetData);
             
             // And parse configurations if any
-            var configurations = ParseConfiguration(targetTable);
+            var configurations = ParseConfiguration(targetData);
             configurations.ForEach(cfg => target.SetLocalConfiguration(cfg));
 
             list.Add(target);
@@ -139,7 +150,7 @@ public class ManifestParser(PluginStore store, string? defaultTargetType=null)
         return list;
     }
     
-    private List<object> ParseConfiguration(TomlTable table)
+    private List<object> ParseConfiguration(Dictionary<string, object> table)
     {
         var configProviders = _pluginStore.GetConfigurationProviders();
         var list = new List<object>();
@@ -147,7 +158,7 @@ public class ManifestParser(PluginStore store, string? defaultTargetType=null)
         foreach (var id in configProviders.Keys.Where(table.ContainsKey))
         {
             var provider = configProviders[id];
-            var data = ParseDictionary((TomlTable)table[id]);
+            var data = ParseTableAsDictionary((TomlTable)table[id]);
             
             list.Add(provider.ParseAsObject(data));
         }
@@ -155,7 +166,7 @@ public class ManifestParser(PluginStore store, string? defaultTargetType=null)
         return list;
     }
     
-    private Dictionary<string, object> ParseDictionary(TomlTable table)
+    private Dictionary<string, object> ParseTableAsDictionary(TomlTable table)
     {
         var dict = new Dictionary<string, object>();
         
@@ -163,7 +174,7 @@ public class ManifestParser(PluginStore store, string? defaultTargetType=null)
         {
             if (value is TomlTable nestedTable)
             {
-                dict[key] = ParseDictionary(nestedTable);
+                dict[key] = ParseTableAsDictionary(nestedTable);
                 continue;
             }
 

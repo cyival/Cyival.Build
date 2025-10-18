@@ -18,9 +18,9 @@ namespace Cyival.Build.Configuration;
 /// </summary>
 public class BuildManifest
 {
-    public List<IBuildTarget> BuildTargets { get; init; } = [];
+    public List<IBuildTarget> BuildTargets { get; set; } = [];
     
-    public List<object> GlobalConfigurations { get; init; } = [];
+    public List<object> GlobalConfigurations { get; set; } = [];
     
     public bool DependencyCheckPerformed { get; private set; } = false;
  

@@ -21,8 +21,8 @@ public interface IBuildTarget
     public bool TryGetLocalConfiguration<T>(out T? configuration);
     
     /// <summary>
-    /// A custom parser for TOML table to parse local configuration.
+    /// Parse target itself from a dictionary of data.
     /// </summary>
-    /// <param name="table">TOML table</param>
-    public void ParseFromTable(TomlTable table) { }
+    /// <param name="data"></param>
+    public void Parse(Dictionary<string, object> data) { }
 }
