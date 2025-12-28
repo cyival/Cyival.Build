@@ -9,6 +9,7 @@ public struct BuildSettings(string outPath, string manifestDir)
     public required Platform TargetPlatform;
 
     public required Mode BuildMode;
+    public string OutPath => outPath;
     
     public PathSolver OutPathSolver = new PathSolver(outPath);
 

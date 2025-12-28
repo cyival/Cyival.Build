@@ -58,17 +58,12 @@ public class ManifestParser(PluginStore store, string? defaultTargetType=null)
             globalConfigurations = ParseConfiguration(ParseTableAsDictionary(buildTable));
         }
 
-        var manifest = new BuildManifest()
+        var manifest = new BuildManifest
         {
             BuildTargets = targets,
             GlobalConfigurations = globalConfigurations,
             ManifestPath = manifestPath,
         };
-
-        foreach (var preconfigurator in _pluginStore.GetPreconfigurators())
-        {
-            preconfigurator.PreconfigureConfigurations(ref manifest);
-        }
         
         return manifest;
     }
@@ -80,10 +75,6 @@ public class ManifestParser(PluginStore store, string? defaultTargetType=null)
         foreach (var (id, value) in table)
         {
             var targetData = ParseTableAsDictionary((TomlTable)value);
-            foreach (var preconfigurator in _pluginStore.GetPreconfigurators())
-            {
-                preconfigurator.PreconfigureTargets(ref targetData);
-            }
             
             // Read generic properties
             var path = targetData.TryGetValue("path", out var pathObj) ? pathObj.ToString() : null;

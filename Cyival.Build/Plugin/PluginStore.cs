@@ -21,8 +21,6 @@ public class PluginStore
 
     private Dictionary<string, string> _targetTypesBinding = [];
     
-    private Dictionary<string, IPreconfigurator> _preconfigurators = [];
-    
     public void ScanAndInitialize(Assembly[] assemblies)
     {
         // Select all types with PluginAttribute and inherits from Plugin class
@@ -107,16 +105,6 @@ public class PluginStore
     {
         RegisterTargetType(id, typeof(T));
     }
-    
-    private void RegisterPreconfigurator(string id, IPreconfigurator preconfigurator)
-    {
-        _preconfigurators.Add(id, preconfigurator);
-    }
-    
-    public void RegisterPreconfigurator<T>(string id) where T : IPreconfigurator, new()
-    {
-        RegisterPreconfigurator(id, new T());
-    }
 
     public Type? GetTargetTypeById(string typeId) => _targetTypes.GetValueOrDefault(typeId);
 
@@ -128,8 +116,6 @@ public class PluginStore
 
     public IEnumerable<IEnvironmentProviderBase> GetEnvironmentProvidersByType(Type type) =>
         _environmentProviders.Values.Where(cp => cp.ProvidedType == type).ToList();
-    
-    public IEnumerable<IPreconfigurator> GetPreconfigurators() => _preconfigurators.Values;
     
     // TODO: Define which provider should be used first.
 }

@@ -19,6 +19,5 @@ public class DefaultPlugin : Plugin
         store.RegisterTargetBuilder<CopyOnlyTargetBuilder>("copy");
         store.RegisterTargetType<CopyOnlyTarget>("copy");
         
-        store.RegisterPreconfigurator<GitPreconfigurator>("git");
     }
 }
