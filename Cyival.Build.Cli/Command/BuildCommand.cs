@@ -34,6 +34,9 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
         [CommandOption("--mode <MODE>")]
         [DefaultValue(BuildSettings.Mode.Debug)]
         public BuildSettings.Mode BuildMode { get; init; }
+
+        [CommandOption("--dep-only")]
+        public bool DependenciesOnly { get; init; }
     }
 
     private string _basePath = "";
@@ -147,7 +150,7 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
         app.CollectItems();
 
         ctx.Status("Building...");
-        var buildApp = app.Build(settings.TargetId, settings.OutPath);
+        var buildApp = app.Build(settings.TargetId, settings.OutPath, settings.DependenciesOnly);
 
         while (!buildApp.IsBuildAllDone() && !buildApp.IsAnyError())
         {
