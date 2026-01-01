@@ -4,14 +4,14 @@ Here are some concepts you should know before using Cyival.Build.
 
 ## Manifest
 
-The manifest is a TOML file named `build.toml` that describes how to build your application. It contains information about the project, build targets, and other configurations.
+The manifest is a TOML file named `Cybuild.toml` (or `build.toml` in previous version) that describes how to build your application. It contains information about the project, build targets, and other configurations.
 
 ## How does it build?
 
 There are three main things to process with in Cyival.Build:
 
 1. **Environment**: This includes all the environment variables and paths that are needed for the build process.
-2. **Configuration**: This includes the settings and options specified in the `build.toml` file.
+2. **Configuration**: This includes the settings and options specified in the `Cybuild.toml` file.
 3. **Builder**: This is the component responsible for executing the build process, using the environment and configuration information.
 
 The three components work together to ensure that your application is built correctly and efficiently. They're provided by the plugin system, allowing for flexibility and customization.
@@ -19,7 +19,7 @@ The three components work together to ensure that your application is built corr
 Next, let's check out the build process.
 
 1. Create a `BuildApp` instance.
-2. Load the manifest file (`build.toml`).
+2. Load the manifest file (`Cybuild.toml`).
 3. Initialize the environment based on the manifest and system settings.
 4. Read the configuration options from the manifest.
 5. Create the builder instance with the environment and configuration.
