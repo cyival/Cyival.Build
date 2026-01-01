@@ -1,3 +1,4 @@
+using Cyival.Build.Build;
 
 namespace Cyival.Build.Configuration;
 
@@ -15,5 +16,5 @@ public interface ITargetLocation
     /// </summary>
     public string? SourcePath { get; }
 
-    void Resolve();
+    void Resolve(BuildSettings buildSettings);
 }

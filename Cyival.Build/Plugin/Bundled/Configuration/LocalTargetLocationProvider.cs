@@ -1,7 +1,8 @@
-namespace Cyival.Build.Plugin.Bundled;
+using Cyival.Build.Configuration;
+
+namespace Cyival.Build.Plugin.Bundled.Configuration;
 
 using System;
-using Configuration;
 
 public class LocalTargetLocationProvider : ITargetLocationProvider
 {

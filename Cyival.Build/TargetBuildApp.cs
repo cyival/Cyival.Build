@@ -65,7 +65,7 @@ public class TargetBuildApp(
             // Process TargetLocation before building.
             if (target.TargetLocation.IsRemote && !target.TargetLocation.IsResolved)
             {
-                target.TargetLocation.Resolve();
+                target.TargetLocation.Resolve(settingsPerformed);
             }
 
             var result = targetBuilder.Build(target, settingsPerformed);

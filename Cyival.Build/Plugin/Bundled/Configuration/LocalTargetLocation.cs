@@ -1,6 +1,7 @@
-namespace Cyival.Build.Plugin.Bundled;
+using Cyival.Build.Build;
+using Cyival.Build.Configuration;
 
-using Configuration;
+namespace Cyival.Build.Plugin.Bundled.Configuration;
 
 public class LocalTargetLocation(string srcPath, string globalSrcPath) : ITargetLocation
 {
@@ -12,7 +13,7 @@ public class LocalTargetLocation(string srcPath, string globalSrcPath) : ITarget
 
     public string? SourcePath => srcPath;
 
-    public void Resolve()
+    public void Resolve(BuildSettings buildSettings)
     {
         throw new NotImplementedException();
     }
