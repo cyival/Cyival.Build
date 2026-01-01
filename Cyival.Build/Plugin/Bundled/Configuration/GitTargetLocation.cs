@@ -4,23 +4,28 @@ using LibGit2Sharp;
 
 namespace Cyival.Build.Plugin.Bundled.Configuration;
 
-public class GitTargetLocation(Uri url) : ITargetLocation
+public class GitTargetLocation(GitRepository repo) : ITargetLocation
 {
     public bool IsRemote => true;
 
     public bool IsResolved { get; private set; }
 
-    public PathSolver SourcePathSolver { get; private set; } = null;
+    public PathSolver SourcePathSolver { get; private set; } = new(".");
 
     public string? SourcePath => null;
 
-    private Uri _gitRepoUrl = url;
+    private GitRepository _gitRepo = repo;
 
     public void Resolve(BuildSettings buildSettings)
     {
         SourcePathSolver = buildSettings.OutTempPathSolver.GetSubSolver("git", buildSettings.CurrentBuildingTarget ?? throw new InvalidOperationException());
         var path = SourcePathSolver.GetBasePath();
 
-        Repository.Clone(_gitRepoUrl.OriginalString, path);
+        var co = new CloneOptions()
+        {
+            BranchName = _gitRepo.Branch,
+        };
+
+        Repository.Clone(_gitRepo.Repository, path, co);
     }
 }
