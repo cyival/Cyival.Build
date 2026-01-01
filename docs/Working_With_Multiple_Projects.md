@@ -60,3 +60,23 @@ Obviously, you can set different options for each project as needed. But notice 
 The `out` option specifies the output directory for the built project.
 
 The `default = true` option in the first project indicates that this project will be built by default when no specific target is specified.
+
+## Requirements between projects
+Simply add `requirements = ["project2", ..]` to section `target.project1`, and then when the `project1` being built, `project2` (and ..) will be built too.
+
+
+```toml
+
+[target.project1]
+default = true
+path = "project1"
+godot = {version = "4.4"}
+requirements = ["project2"] # <--- Here it is.
+
+[target.project2]
+path = "project2"
+out = "utils/module"
+godot = {export-pack = true}
+```
+
+Note that the output path of targets is always based to the output directory (usually `out/`).

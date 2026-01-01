@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using Cyival.Build.Configuration;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -12,22 +12,22 @@ namespace Cyival.Build.Cli.Command;
 
 using Utils;
 
-[Description("A subcommand same as no subcommand.")]
+[Description("Build a cybuild project.")]
 public sealed class BuildCommand : Command<BuildCommand.Settings>
 {
     public sealed class Settings : CommandSettings
     {
         [CommandArgument(0, "[PATH]")]
-        [DefaultValue("./build.toml")]
+        [DefaultValue(".")]
         public required string Path { get; set; }
-        
+
         [CommandOption("-o|--out <PATH>")]
         [DefaultValue("./out")]
         public required string OutPath { get; init; }
 
         [CommandOption("-t|--target <ID>")]
         public string? TargetId { get; init; }
-        
+
         [CommandOption("--platform <PLATFORM>")]
         public string? PlatformName { get; init; }
 
@@ -39,7 +39,7 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
     private string _basePath = "";
 
     private bool _isBuildOkay = true;
-    
+
     /// <summary>
     /// Validate path and make path absolute.
     /// </summary>
@@ -47,10 +47,19 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
     {
         if (Directory.Exists(settings.Path))
         {
-            settings.Path = Path.Combine(settings.Path, "build.toml");
-        }
+            var path = Path.Combine(settings.Path, "Cybuild.toml");
+            if (!File.Exists(path))
+            {
+                path = Path.Combine(settings.Path, "build.toml");
+                if (!File.Exists(path))
+                    throw new FileNotFoundException($"Manifest not found: {settings.Path}", settings.Path);
 
-        if (!File.Exists(settings.Path))
+                AnsiConsole.MarkupLine("[yellow]WARNING[/]: Instead of \"build.toml\", we are now suggesting to use \"Cybuild.toml\" as filename of the manifest.");
+            }
+
+            settings.Path = path;
+        }
+        else if (!File.Exists(settings.Path))
         {
             throw new FileNotFoundException($"Manifest not found: {settings.Path}", settings.Path);
         }
@@ -62,17 +71,20 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
     private static string GetTempDir(Settings settings) => Path.GetFullPath(
     Path.Combine(settings.Path, "..", settings.OutPath, BuildApp.OutTempDirName)
         );
-    
+
     public override int Execute(CommandContext context, Settings settings)
     {
+        var version = typeof(BuildApp).Assembly.GetName().Version;
+        AnsiConsole.MarkupLine($"[yellow]Cyival.Build[/] [dim]v{version}[/]\n");
+
         ValidatePath(ref settings);
-        
+
         AnsiConsole.MarkupLine($"Building target {settings.TargetId ?? "default"} at {settings.Path}\n");
-        
+
         // Create the temp dir to ensure the log can be written.
         Directory.CreateDirectory(GetTempDir(settings));
 
-        BuildApp.LoggerFactory = LoggerFactory.Create(builder => 
+        BuildApp.LoggerFactory = LoggerFactory.Create(builder =>
         {
             builder.AddFile(o =>
             {
@@ -86,25 +98,25 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
         });
 
         BuildApp.ConsoleRedirector = new AnsiConsoleRedirector();
-        
+
         var stopwatch = Stopwatch.StartNew();
-        
+
         AnsiConsole.Status()
             .Start("Working...", ctx => Build(ctx, settings));
-        
+
         stopwatch.Stop();
 
         if (_isBuildOkay)
         {
             AnsiConsole.MarkupLine($"[green]Build completed[/] in {stopwatch.Elapsed.TotalSeconds:0.##}s.");
-            
+
             return 0;
         }
-        
+
         AnsiConsole.MarkupLine($"[red]Build failed[/] in {stopwatch.Elapsed.TotalSeconds:0.##}s.");
 
         return -1;
-        
+
     }
 
     private void Build(StatusContext ctx, Settings settings)
@@ -115,22 +127,22 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
             TargetPlatform = BuildSettings.GetCurrentPlatform(),
             BuildMode = settings.BuildMode,
         };
-        
+
         using var app = new BuildApp(buildSettings);
         app.InitializePlugins();
         AnsiConsole.Markup(":check_mark:  Initialized plugins.\n");
-                
+
         var parser = app.CreateManifestParser("godot");
         var manifest = parser.Parse(settings.Path);
-                
+
         //AnsiConsole.MarkupLine(string.Join(' ', manifest.BuildTargets.Select(t => t.Id)));
         //AnsiConsole.MarkupLine(string.Join(' ', manifest.GlobalConfigurations.Select(c => c.GetType().Name)));
-                
+
         AnsiConsole.MarkupLine(":check_mark:  Loaded manifest.");
-                
+
         app.Initialize(manifest);
         AnsiConsole.MarkupLine(":check_mark:  Initialized builder.");
-                
+
         ctx.Status("Checking environment...");
         app.CollectItems();
 
@@ -140,16 +152,16 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
         while (!buildApp.IsBuildAllDone() && !buildApp.IsAnyError())
         {
             var next = buildApp.GetNext();
-                    
-            if (next is not {} buildContext)
+
+            if (next is not { } buildContext)
                 break;
-                    
+
             AnsiConsole.MarkupLine($"   Building target [yellow bold]{buildContext.TargetId}[/]");
             AnsiConsole.WriteLine(); // Use `\n` seems will cause a weird output, so I used `WriteLine()` instead.
             ctx.Status($"Building ... ({buildApp.GetCurrentIndex() + 1} of {buildApp.GetTotalTargets()})");
 
             buildContext.Build();
-            
+
             AnsiConsole.MarkupLine($"   Successfully built [yellow bold]{buildContext.TargetId}[/]");
             AnsiConsole.WriteLine();
         }

@@ -9,7 +9,7 @@ A build tool for Godot projects.
 ## Features
 
 - [x] Detecting Godot installations from system, GodotEnv and ...
-- [ ] Building multiple projects as applications or packs(.pck)
+- [x] Building multiple projects as applications or packs(.pck)
 - [ ] And more!
 
 ## Get Started
@@ -20,11 +20,11 @@ To start using **Cyival.Build**, you can install the CLI tool via NuGet:
 dotnet tool install --global Cyival.Build.Cli
 ```
 
-Let's say you have a Godot project located at `./MyGodotProject`. Now create a manifest file named `build.toml` in the upper directory of your project with the following content:
+Let's say you have a Godot project located at `./MyGodotProject`. Now create a manifest file named `Cybuild.toml` in the upper directory of your project with the following content:
 
 ```toml
 # The minimal version of Cyival.Build required to build this project.
-minimal-version = 0.1
+minimal-version = 0.2
 
 [build.godot]
 version = "4.4" # Required, specify the Godot version to use for building.
@@ -34,7 +34,7 @@ type = "godot" # Optional, default is "godot"
 path = "./MyGodotProject"
 ```
 
-You can customize the `build.toml` file further based on your project's needs. For more details, refer to the [documentation](./docs/).
+You can customize the `Cybuild.toml` file further based on your project's needs. For more details, refer to the [documentation](./docs/).
 
 Now you should have a file structure like this:
 
@@ -55,7 +55,7 @@ cybuild build
 Or by simply:
 
 ```bash
-cybuild
+cybuild b
 ```
 
 The built application will be located in the `./out` directory by default.

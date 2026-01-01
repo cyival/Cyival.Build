@@ -1,10 +1,10 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace Cyival.Build.Cli.Command;
 
-[Description("Delete EVERYTHING without confirmation.")]
+[Description("Clean output directories")]
 public sealed class CleanCommand : Command<CleanCommand.Settings>
 {
     public sealed class Settings : CommandSettings
@@ -14,7 +14,7 @@ public sealed class CleanCommand : Command<CleanCommand.Settings>
         public required string Path { get; set; }
 
         [CommandOption("-y")]
-        [Description("Clean output directories")]
+        [Description("Delete EVERYTHING without confirmation.")]
         public bool AgreeAll { get; init; }
     }
 
@@ -28,15 +28,15 @@ public sealed class CleanCommand : Command<CleanCommand.Settings>
         foreach (var dir in directories)
         {
             var confirmation = true;
-            
+
             if (!settings.AgreeAll)
                 confirmation = AnsiConsole.Prompt(
                     new ConfirmationPrompt($"Delete {dir}?"));
-            
+
             if (confirmation)
                 Directory.Delete(dir, true);
         }
-        
+
         return 0;
     }
 }
