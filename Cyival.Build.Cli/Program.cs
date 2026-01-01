@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Cyival.Build;
 using Cyival.Build.Cli.Command;
 using Microsoft.Extensions.Logging;
@@ -10,9 +10,7 @@ var version = typeof(BuildApp).Assembly.GetName().Version;
 Console.OutputEncoding = Encoding.UTF8;
 Console.InputEncoding = Encoding.UTF8;
 
-AnsiConsole.MarkupLine($"[yellow]Cyival.Build[/] [dim]v{version}[/]\n");
-
-var app = new CommandApp<BuildCommand>();
+var app = new CommandApp<RootCommand>();
 
 #if DEBUG
 app.Configure(config =>
@@ -28,6 +26,7 @@ app.Configure(config =>
 app.Configure(cfg =>
 {
     cfg.AddCommand<BuildCommand>("build");
+    cfg.AddCommand<BuildCommand>("b");
     cfg.AddCommand<CleanCommand>("clean");
 });
 
