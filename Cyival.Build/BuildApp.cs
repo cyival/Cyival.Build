@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using Cyival.Build.Build;
 using Cyival.Build.Configuration;
 using Cyival.Build.Environment;
@@ -44,7 +44,8 @@ public sealed class BuildApp(BuildSettings settings) : IDisposable
         Manifest = manifest;
     }
 
-    public void CollectItems(string? targetId = null)
+    // TODO: Move this into initialize and update progress via events.
+    public void CollectItems()
     {
         if (Manifest is null)
             throw new InvalidOperationException("BuildApp is not initialized. Call Initialize() first.");
@@ -82,7 +83,7 @@ public sealed class BuildApp(BuildSettings settings) : IDisposable
         _environments = environments;
     }
 
-    public TargetBuildApp Build(string? targetId, string outPath)
+    public TargetBuildApp Build(string? targetId, string outPath, bool depOnly = false)
     {
         if (Manifest is null)
             throw new InvalidOperationException("BuildApp is not initialized. Call Initialize() first.");
@@ -91,7 +92,7 @@ public sealed class BuildApp(BuildSettings settings) : IDisposable
             targetId = Manifest.GetDefaultTargetId()
                        ?? throw new InvalidOperationException("No default targets or more than one default target defined. Please specify a target to build.");
 
-        var buildList = Manifest.GetOrderedTargets(targetId);
+        var buildList = Manifest.GetOrderedTargets(targetId, depOnly);
 
         if (_builders.Count == 0) // TODO: check environment count
             throw new InvalidOperationException();

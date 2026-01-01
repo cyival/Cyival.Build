@@ -6,6 +6,7 @@ using Build;
 
 internal class MockBuildTarget : TargetBase, IBuildTarget
 {
+#pragma warning disable CS8625
     public MockBuildTarget(string id, IEnumerable<string>? requirements = null)
          : base(null, string.Empty, id, requirements)
     {
@@ -177,7 +178,7 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("C"));
 
         // Act
-        var ordered = manifest.GetOrderedTargets().ToList();
+        var ordered = manifest.GetOrderedTargets("all").ToList();
 
         // Assert
         Assert.Equal(3, ordered.Count);
@@ -196,7 +197,7 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("C", ["B"]));
 
         // Act
-        var ordered = manifest.GetOrderedTargets().ToList();
+        var ordered = manifest.GetOrderedTargets("all").ToList();
 
         // Assert
         Assert.Equal(3, ordered.Count);
@@ -216,7 +217,7 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("D", ["B", "C"]));
 
         // Act
-        var ordered = manifest.GetOrderedTargets().ToList();
+        var ordered = manifest.GetOrderedTargets("all").ToList();
 
         // Assert
         Assert.Equal(4, ordered.Count);
@@ -244,7 +245,7 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("deploy", ["package"]));
 
         // Act
-        var ordered = manifest.GetOrderedTargets().ToList();
+        var ordered = manifest.GetOrderedTargets("all").ToList();
 
         // Assert
         var compileIndex = ordered.FindIndex(t => t.Id == "compile");
@@ -270,7 +271,7 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("C", ["A"]));
 
         // Act & Assert
-        Assert.Throws<DependencyValidationException>(() => manifest.GetOrderedTargets());
+        Assert.Throws<DependencyValidationException>(() => manifest.GetOrderedTargets("all"));
     }
 
     [Fact]
@@ -385,8 +386,9 @@ public class BuildManifestTests
 public class BuildManifestTargetSpecificTests
 {
     [Fact]
-    public void GetBuildOrder_NullTargetId_ShouldReturnAllTargets()
+    public void GetBuildOrder_NullTargetId_ShouldThrowArgumentNullException()
     {
+#pragma warning disable CS8625
         // Arrange
         var targets = new List<IBuildTarget>
         {
@@ -396,18 +398,12 @@ public class BuildManifestTargetSpecificTests
         };
         var validator = new DependencyValidator(targets);
 
-        // Act
-        var result = validator.GetBuildOrder(null).ToList();
-
-        // Assert
-        Assert.Equal(3, result.Count);
-        Assert.Contains(result, t => t.Id == "A");
-        Assert.Contains(result, t => t.Id == "B");
-        Assert.Contains(result, t => t.Id == "C");
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => validator.GetBuildOrder(null).ToList());
     }
 
     [Fact]
-    public void GetBuildOrder_EmptyTargetId_ShouldReturnAllTargets()
+    public void GetBuildOrder_EmptyTargetId_ShouldThrowArgumentException()
     {
         // Arrange
         var targets = new List<IBuildTarget>
@@ -418,14 +414,8 @@ public class BuildManifestTargetSpecificTests
         };
         var validator = new DependencyValidator(targets);
 
-        // Act
-        var result = validator.GetBuildOrder("").ToList();
-
-        // Assert
-        Assert.Equal(3, result.Count);
-        Assert.Contains(result, t => t.Id == "A");
-        Assert.Contains(result, t => t.Id == "B");
-        Assert.Contains(result, t => t.Id == "C");
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => validator.GetBuildOrder("").ToList());
     }
 
     [Fact]
@@ -648,7 +638,7 @@ public class BuildManifestExtensionTests
     }
 
     [Fact]
-    public void GetOrderedTargets_NoTargetId_ShouldReturnAllTargets()
+    public void GetOrderedTargets_TargetIdAll_ShouldReturnAllTargets()
     {
         // Arrange
         var targets = new List<IBuildTarget>
@@ -664,7 +654,7 @@ public class BuildManifestExtensionTests
         }
 
         // Act
-        var result = manifest.GetOrderedTargets().ToList();
+        var result = manifest.GetOrderedTargets("all").ToList();
 
         // Assert
         Assert.Equal(3, result.Count);

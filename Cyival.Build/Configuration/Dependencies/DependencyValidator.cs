@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Cyival.Build.Build;
 
 namespace Cyival.Build.Configuration.Dependencies;
@@ -50,22 +50,36 @@ public class DependencyValidator
             throw new DependencyValidationException(errors);
         }
     }
-    
+
     /// <summary>
-    /// Gets the build order, optionally for a specific target
+    /// Gets the build order of specified target
     /// </summary>
-    /// <param name="targetId">ID of the target to build, or null to build all targets</param>
+    /// <param name="targetId">ID of the target to build, or `all` to build all targets</param>
     /// <returns>List of targets in dependency order</returns>
-    public IReadOnlyList<IBuildTarget> GetBuildOrder(string? targetId = null)
+    public IReadOnlyList<IBuildTarget> GetBuildOrder(string targetId)
     {
-        if (string.IsNullOrEmpty(targetId))
+        ArgumentException.ThrowIfNullOrWhiteSpace(targetId);
+
+        // Build all targets
+        if (targetId == "all")
         {
-            // Build all targets
             return GetFullBuildOrder();
         }
-        
+
         // Build specific target and its dependencies
         return GetTargetBuildOrder(targetId);
+    }
+
+    /// <summary>
+    /// Gets the build order of dependencies of specified target
+    /// </summary>
+    /// <param name="targetId">ID of the target to build dependencies</param>
+    /// <returns>List of targets in dependency order</returns>
+    public IReadOnlyList<IBuildTarget> GetDependenciesBuildOrder(string targetId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(targetId);
+
+        return GetTargetBuildOrder(targetId).Where(t => t.Id != targetId).ToList();
     }
 
     /// <summary>
@@ -101,7 +115,7 @@ public class DependencyValidator
 
         // Collect all required targets (specified target and all its dependencies)
         var neededTargets = CollectDependencies(target);
-        
+
         // Perform topological sort on the required targets
         return GetPartialBuildOrder(neededTargets);
     }
@@ -165,9 +179,9 @@ public class DependencyValidator
     /// Visits a target and processes its dependencies (supports partial target set)
     /// </summary>
     private void Visit(
-        IBuildTarget target, 
-        ISet<string> visited, 
-        ISet<string> tempMark, 
+        IBuildTarget target,
+        ISet<string> visited,
+        ISet<string> tempMark,
         List<IBuildTarget> result,
         HashSet<IBuildTarget>? allowedTargets = null)
     {
@@ -175,8 +189,8 @@ public class DependencyValidator
         {
             throw new DependencyValidationException(
                 new DependencyError(
-                    DependencyErrorType.CircularReference, 
-                    target.Id, 
+                    DependencyErrorType.CircularReference,
+                    target.Id,
                     additionalInfo: $"Circular dependency detected: {string.Join("->", tempMark)}->{target.Id}")
             );
         }
@@ -202,12 +216,12 @@ public class DependencyValidator
         visited.Add(target.Id);
         result.Add(target);
     }
-    
+
     private List<DependencyError> FindCyclicDependencies()
     {
         var errors = new List<DependencyError>();
         var visited = new HashSet<string>();
-    
+
         foreach (var target in _targets)
         {
             // Skip self-reference targets，because they have already checked in CheckDependencies.
@@ -216,16 +230,16 @@ public class DependencyValidator
 
             if (visited.Contains(target.Id))
                 continue;
-            
+
             var path = new Stack<string>();
             var recursionStack = new HashSet<string>();
             if (FindCycles(target, visited, recursionStack, path))
             {
                 var cyclePath = string.Join(" -> ", path.Reverse());
                 errors.Add(new DependencyError(
-                    DependencyErrorType.CircularReference, 
-                    target.Id, 
-                    requiredId: null, 
+                    DependencyErrorType.CircularReference,
+                    target.Id,
+                    requiredId: null,
                     additionalInfo: $"Circular reference: {cyclePath}"));
             }
         }
@@ -258,7 +272,7 @@ public class DependencyValidator
 
         foreach (var requiredId in target.Requirements)
         {
-            if (_targetDictionary.TryGetValue(requiredId, out var dependency) && 
+            if (_targetDictionary.TryGetValue(requiredId, out var dependency) &&
                 FindCycles(dependency, visited, recursionStack, path))
             {
                 return true;
@@ -280,7 +294,7 @@ public class DependencyValidator
     {
         var sb = new StringBuilder();
         sb.AppendLine("digraph BuildDependencies {");
-        
+
         foreach (var target in _targets)
         {
             if (target.Requirements.Count == 0)
@@ -295,7 +309,7 @@ public class DependencyValidator
                 }
             }
         }
-        
+
         sb.AppendLine("}");
         return sb.ToString();
     }
@@ -313,10 +327,10 @@ public class DependencyValidator
         }
 
         Console.WriteLine($"{new string(' ', indent)}{target.Id}");
-        
+
         foreach (var requiredId in target.Requirements)
         {
             PrintDependencyTree(requiredId, indent + 2);
         }
-    }   
+    }
 }
