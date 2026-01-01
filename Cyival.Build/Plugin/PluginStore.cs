@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using Cyival.Build.Build;
 using Cyival.Build.Configuration;
 using Cyival.Build.Environment;
@@ -10,17 +10,19 @@ public class PluginStore
 {
     private ILogger<PluginStore> _logger = BuildApp.LoggerFactory.CreateLogger<PluginStore>();
     private HashSet<string> _initializedPlugins = [];
-    
+
     private Dictionary<string, IEnvironmentProviderBase> _environmentProviders = [];
 
     private Dictionary<string, IConfigurationProviderBase> _configurationProviders = [];
 
     private Dictionary<string, ITargetBuilderBase> _targetBuilders = [];
-    
+
+    private Dictionary<string, ITargetLocationProvider> _targetLocationProviders = [];
+
     private Dictionary<string, Type> _targetTypes = [];
 
     private Dictionary<string, string> _targetTypesBinding = [];
-    
+
     public void ScanAndInitialize(Assembly[] assemblies)
     {
         // Select all types with PluginAttribute and inherits from Plugin class
@@ -42,13 +44,13 @@ public class PluginStore
                     _logger.LogWarning("Plugin \"{}\" already initialized.", attribute.Id);
                     return;
                 }
-                
+
                 if (Activator.CreateInstance(t) is not Plugin plugin)
                 {
                     _logger.LogWarning("Failed to initialize plugin");
                     return;
                 }
-                
+
                 plugin.Initialize(this);
 
                 _initializedPlugins.Add(attribute.Id);
@@ -59,22 +61,22 @@ public class PluginStore
     {
         _environmentProviders.Add(id, provider);
     }
-    
+
     public void RegisterEnvironmentProvider<T>(string id) where T : IEnvironmentProviderBase, new()
     {
         RegisterEnvironmentProvider(id, new T());
     }
-    
+
     private void RegisterConfigurationProvider(string id, IConfigurationProviderBase provider)
     {
         _configurationProviders.Add(id, provider);
     }
-    
+
     public void RegisterConfigurationProvider<T>(string id) where T : IConfigurationProviderBase, new()
     {
         RegisterConfigurationProvider(id, new T());
     }
-    
+
     private void RegisterTargetBuilder(string id, ITargetBuilderBase builder, string targetTypeId)
     {
         _targetBuilders.Add(id, builder);
@@ -90,32 +92,45 @@ public class PluginStore
     {
         RegisterTargetBuilder<T>(id, id);
     }
-    
+
     private void RegisterTargetType(string id, Type type)
     {
         if (type.GetInterfaces().All(i => i != typeof(IBuildTarget)))
         {
             throw new NotSupportedException();
         }
-        
+
         _targetTypes.Add(id, type);
     }
-    
+
     public void RegisterTargetType<T>(string id) where T : TargetBase, IBuildTarget
     {
         RegisterTargetType(id, typeof(T));
     }
 
+    public void RegisterTargetLocationProvider(string id, ITargetLocationProvider type)
+    {
+        _targetLocationProviders.Add(id, type);
+    }
+
+    public void RegisterTargetLocationProvider<T>(string id)
+    where T : ITargetLocationProvider, new()
+    {
+        RegisterTargetLocationProvider(id, new T());
+    }
+
     public Type? GetTargetTypeById(string typeId) => _targetTypes.GetValueOrDefault(typeId);
 
     public string? GetTargetTypeIdByType(Type type) => _targetTypes.SingleOrDefault(kvp => kvp.Value == type).Key;
-    
+
     public ITargetBuilderBase GetBuilderByTargetTypeId(string typeId) => _targetBuilders[_targetTypesBinding[typeId]]; // TODO: handling not found
-    
+
     public Dictionary<string, IConfigurationProviderBase> GetConfigurationProviders() => _configurationProviders;
 
     public IEnumerable<IEnvironmentProviderBase> GetEnvironmentProvidersByType(Type type) =>
         _environmentProviders.Values.Where(cp => cp.ProvidedType == type).ToList();
-    
+
+    public Dictionary<string, ITargetLocationProvider> GetTargetLocationProviders() => _targetLocationProviders;
+
     // TODO: Define which provider should be used first.
 }

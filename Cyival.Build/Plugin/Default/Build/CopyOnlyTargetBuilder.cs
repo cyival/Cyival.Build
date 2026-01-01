@@ -1,4 +1,4 @@
-﻿using Cyival.Build.Build;
+using Cyival.Build.Build;
 using Microsoft.Extensions.Logging;
 
 namespace Cyival.Build.Plugin.Default.Build;
@@ -9,7 +9,7 @@ public class CopyOnlyTargetBuilder : ITargetBuilder<CopyOnlyTarget>
 {
     private CopyOnlyConfiguration _configuration;
     private ILogger _logger = BuildApp.LoggerFactory.CreateLogger<CopyOnlyTargetBuilder>();
-    
+
     public Type[] GetRequiredEnvironmentTypes() => [];
 
     public Type[] GetRequiredConfigurationTypes() => [typeof(CopyOnlyConfiguration)];
@@ -25,9 +25,9 @@ public class CopyOnlyTargetBuilder : ITargetBuilder<CopyOnlyTarget>
         if (!buildSettings.IsBuilding(target))
             throw new InvalidOperationException("Invalid settings provided.");
 
-        var from = buildSettings.GlobalSourcePath;
+        var from = target.TargetLocation.GlobalSourcePath;
         var dest = buildSettings.GlobalDestinationPath;
-        
+
         _logger.LogDebug("Src -> {f}, Dest -> {d}", from, dest);
 
         try
@@ -41,16 +41,16 @@ public class CopyOnlyTargetBuilder : ITargetBuilder<CopyOnlyTarget>
             return BuildResult.Failed;
         }
     }
-    
+
     private void CopyFilesRecursively(string sourcePath, string targetPath, string filter)
     {
         // Validate input parameters
         if (string.IsNullOrEmpty(sourcePath))
             throw new ArgumentException("Source path cannot be null or empty.", nameof(sourcePath));
-        
+
         if (string.IsNullOrEmpty(targetPath))
             throw new ArgumentException("Target path cannot be null or empty.", nameof(targetPath));
-        
+
         if (string.IsNullOrEmpty(filter))
             throw new ArgumentException("Filter cannot be null or empty.", nameof(filter));
 
