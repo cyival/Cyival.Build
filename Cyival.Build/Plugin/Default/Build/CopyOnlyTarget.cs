@@ -1,11 +1,12 @@
-﻿using Cyival.Build.Build;
+using Cyival.Build.Build;
+using Cyival.Build.Configuration;
 
 namespace Cyival.Build.Plugin.Default.Build;
 
 public class CopyOnlyTarget : TargetBase, IBuildTarget
 {
-    public CopyOnlyTarget(string path, string dest, string id, IEnumerable<string>? requirements = null)
-         : base(path, dest, id, requirements)
+    public CopyOnlyTarget(ITargetLocation tl, string dest, string id, IEnumerable<string>? requirements = null)
+         : base(tl, dest, id, requirements)
     {
     }
 

@@ -1,15 +1,16 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 
 namespace Cyival.Build.Build;
 
 public struct BuildSettings(string outPath, string manifestDir)
 {
     public required Architecture TargetArchitecture;
-    
+
     public required Platform TargetPlatform;
 
     public required Mode BuildMode;
-    
+    public string OutPath => outPath;
+
     public PathSolver OutPathSolver = new PathSolver(outPath);
 
     public PathSolver ManifestDirSolver = new PathSolver(manifestDir);
@@ -18,14 +19,13 @@ public struct BuildSettings(string outPath, string manifestDir)
 
     // These should be set before building, after build app initialized.
     // They're variant for different targets.
-    public PathSolver SourcePathSolver;
+    // TODO: Move it into IBuildTarget.
     public PathSolver DestinationPathSolver;
-    
+
     public string? CurrentBuildingTarget;
 
-    public string GlobalSourcePath => SourcePathSolver.GetBasePath();
     public string GlobalDestinationPath => DestinationPathSolver.GetBasePath();
-    
+
     public static Platform GetCurrentPlatform() => System.Environment.OSVersion.Platform switch
     {
         PlatformID.Win32NT => Platform.Windows,
@@ -44,7 +44,7 @@ public struct BuildSettings(string outPath, string manifestDir)
 
     public bool IsBuilding(IBuildTarget target) =>
         CurrentBuildingTarget is not null && CurrentBuildingTarget == target.Id;
-    
+
     public enum Platform
     {
         Windows,

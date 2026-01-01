@@ -10,7 +10,7 @@ public class CopyOnlyConfigurationProvider : IConfigurationProvider<CopyOnlyConf
         return new CopyOnlyConfiguration();
     }
 
-    public CopyOnlyConfiguration ParseFromTable(TomlTable table)
+    public CopyOnlyConfiguration Parse(Dictionary<string, object> data)
     {
         throw new NotImplementedException();
     }
