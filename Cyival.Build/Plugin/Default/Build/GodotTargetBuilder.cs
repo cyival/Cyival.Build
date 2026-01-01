@@ -223,6 +223,7 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
     private static BuildSettings.Platform ParsePlatform(string platformStr) => platformStr switch
     {
         "Windows Desktop" => BuildSettings.Platform.Windows,
+        "Linux" => BuildSettings.Platform.Linux,
         "Linux/X11" => BuildSettings.Platform.Linux,
         "macOS" => BuildSettings.Platform.MacOS,
         _ => throw new NotSupportedException($"Platform {platformStr} is not supported.")
