@@ -177,7 +177,7 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("C"));
 
         // Act
-        var ordered = manifest.GetOrderedTargets().ToList();
+        var ordered = manifest.GetOrderedTargets("all").ToList();
 
         // Assert
         Assert.Equal(3, ordered.Count);
@@ -196,7 +196,7 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("C", ["B"]));
 
         // Act
-        var ordered = manifest.GetOrderedTargets().ToList();
+        var ordered = manifest.GetOrderedTargets("all").ToList();
 
         // Assert
         Assert.Equal(3, ordered.Count);
@@ -216,7 +216,7 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("D", ["B", "C"]));
 
         // Act
-        var ordered = manifest.GetOrderedTargets().ToList();
+        var ordered = manifest.GetOrderedTargets("all").ToList();
 
         // Assert
         Assert.Equal(4, ordered.Count);
@@ -244,7 +244,7 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("deploy", ["package"]));
 
         // Act
-        var ordered = manifest.GetOrderedTargets().ToList();
+        var ordered = manifest.GetOrderedTargets("all").ToList();
 
         // Assert
         var compileIndex = ordered.FindIndex(t => t.Id == "compile");
@@ -270,7 +270,7 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("C", ["A"]));
 
         // Act & Assert
-        Assert.Throws<DependencyValidationException>(() => manifest.GetOrderedTargets());
+        Assert.Throws<DependencyValidationException>(() => manifest.GetOrderedTargets("all"));
     }
 
     [Fact]
@@ -648,7 +648,7 @@ public class BuildManifestExtensionTests
     }
 
     [Fact]
-    public void GetOrderedTargets_NoTargetId_ShouldReturnAllTargets()
+    public void GetOrderedTargets_TargetIdAll_ShouldReturnAllTargets()
     {
         // Arrange
         var targets = new List<IBuildTarget>
@@ -664,7 +664,7 @@ public class BuildManifestExtensionTests
         }
 
         // Act
-        var result = manifest.GetOrderedTargets().ToList();
+        var result = manifest.GetOrderedTargets("all").ToList();
 
         // Assert
         Assert.Equal(3, result.Count);
