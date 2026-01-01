@@ -18,7 +18,7 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
     public sealed class Settings : CommandSettings
     {
         [CommandArgument(0, "[PATH]")]
-        [DefaultValue("./build.toml")]
+        [DefaultValue(".")]
         public required string Path { get; set; }
 
         [CommandOption("-o|--out <PATH>")]
@@ -47,10 +47,19 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
     {
         if (Directory.Exists(settings.Path))
         {
-            settings.Path = Path.Combine(settings.Path, "build.toml");
-        }
+            var path = Path.Combine(settings.Path, "Cybuild.toml");
+            if (!File.Exists(path))
+            {
+                path = Path.Combine(settings.Path, "build.toml");
+                if (!File.Exists(path))
+                    throw new FileNotFoundException($"Manifest not found: {settings.Path}", settings.Path);
 
-        if (!File.Exists(settings.Path))
+                AnsiConsole.MarkupLine("[yellow]WARNING[/]: Instead of \"build.toml\", we are now suggesting to use \"Cybuild.toml\" as filename of the manifest.");
+            }
+
+            settings.Path = path;
+        }
+        else if (!File.Exists(settings.Path))
         {
             throw new FileNotFoundException($"Manifest not found: {settings.Path}", settings.Path);
         }
