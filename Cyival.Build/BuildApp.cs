@@ -12,13 +12,13 @@ public sealed class BuildApp(BuildSettings settings) : IDisposable
 {
     // TODO: make this configurable
     public const string OutTempDirName = ".cybuild";
-    
+
     public static ILoggerFactory LoggerFactory { get; set; }
         = NullLoggerFactory.Instance;
 
-    public static IConsoleRedirector ConsoleRedirector { get; set; }
-        = new EmptyConsoleRedirector();
-    
+    public static TextWriter ConsoleRedirector { get; set; }
+        = TextWriter.Null;
+
     private ILogger<BuildApp> _logger = LoggerFactory.CreateLogger<BuildApp>();
 
     private PluginStore _pluginStore = new PluginStore();
@@ -28,14 +28,14 @@ public sealed class BuildApp(BuildSettings settings) : IDisposable
     private HashSet<ITargetBuilderBase> _builders = [];
 
     public BuildManifest? Manifest { get; private set; } = null;
-    
+
     public void Dispose()
     {
         // TODO release managed resources here
     }
 
     public void InitializePlugins() => _pluginStore.ScanAndInitialize(AppDomain.CurrentDomain.GetAssemblies());
-    
+
     public void Initialize(BuildManifest manifest)
     {
         if (!manifest.DependencyCheckPerformed)
@@ -55,7 +55,7 @@ public sealed class BuildApp(BuildSettings settings) : IDisposable
 
         var builders = new HashSet<ITargetBuilderBase>();
         var environments = new List<object>();
-        
+
         foreach (var typeId in targetTypes)
         {
             // Get builder
@@ -70,10 +70,10 @@ public sealed class BuildApp(BuildSettings settings) : IDisposable
                     continue;
 
                 var providers = _pluginStore.GetEnvironmentProvidersByType(envType);
-                
+
                 providers.Where(p => p.CanProvide()).ToList().ForEach(p =>
                 {
-                    environments = [ .. environments , .. p.GetEnvironmentAsObject()];
+                    environments = [.. environments, .. p.GetEnvironmentAsObject()];
                 });
             }
         }
@@ -81,12 +81,12 @@ public sealed class BuildApp(BuildSettings settings) : IDisposable
         _builders = builders;
         _environments = environments;
     }
-    
+
     public TargetBuildApp Build(string? targetId, string outPath)
     {
         if (Manifest is null)
             throw new InvalidOperationException("BuildApp is not initialized. Call Initialize() first.");
-        
+
         if (string.IsNullOrEmpty(targetId))
             targetId = Manifest.GetDefaultTargetId()
                        ?? throw new InvalidOperationException("No default targets or more than one default target defined. Please specify a target to build.");
@@ -95,14 +95,14 @@ public sealed class BuildApp(BuildSettings settings) : IDisposable
 
         if (_builders.Count == 0) // TODO: check environment count
             throw new InvalidOperationException();
-        
+
         // check for missing required configuration
         var configurations = GetRequiredConfigurations();
-        
+
         // TODO: check for whether environment is provided.
 
         var pathSolver = new PathSolver(Manifest.ManifestPath);
-        
+
         foreach (var builder in _builders)
         {
             builder.Setup(_environments, configurations);
@@ -110,17 +110,17 @@ public sealed class BuildApp(BuildSettings settings) : IDisposable
 
         return new TargetBuildApp(buildList, _builders, _environments, settings);
     }
-    
-    public ManifestParser CreateManifestParser(string? defaultTargetTypeId=null) => new(_pluginStore, defaultTargetTypeId);
+
+    public ManifestParser CreateManifestParser(string? defaultTargetTypeId = null) => new(_pluginStore, defaultTargetTypeId);
 
     public List<object> GetRequiredConfigurations()
     {
         if (Manifest is null)
             throw new InvalidOperationException("BuildApp is not initialized. Call Initialize() first.");
-        
+
         var configurations = Manifest.GlobalConfigurations;
         var cfgProviders = _pluginStore.GetConfigurationProviders().Values.ToList();
-        
+
         foreach (var builder in _builders)
         {
             foreach (var type in builder.GetRequiredConfigurationTypes())

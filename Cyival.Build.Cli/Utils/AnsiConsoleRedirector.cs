@@ -1,16 +1,21 @@
-﻿using Spectre.Console;
+using System.Text;
+using Spectre.Console;
 
 namespace Cyival.Build.Cli.Utils;
 
-public class AnsiConsoleRedirector : IConsoleRedirector
+public class AnsiConsoleRedirector : TextWriter
 {
-    public void Write(params string[] content)
+    public override Encoding Encoding => Encoding.UTF8;
+
+    public override void Write(string? value)
     {
-        AnsiConsole.Write(string.Join(string.Empty, content));
+        if (value is null) return;
+        AnsiConsole.Write(value);
     }
 
-    public void WriteLine(params string[] content)
+    public override void WriteLine(string? value)
     {
-        Write([.. content, "\n"]);
+        if (value is null) return;
+        AnsiConsole.WriteLine(value);
     }
 }
