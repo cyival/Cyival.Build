@@ -197,7 +197,7 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         if (!File.Exists(presetPath))
             throw new FileNotFoundException("Could not find export_presets.cfg", presetPath);
 
-        var rawData = GodotConfigConverter.ConvertByGodotInstance(settings.OutPathSolver, instance, presetPath)
+        var rawData = GodotConfigConverter.ConvertByGodotInstance(settings, instance, presetPath)
             ?? throw new InvalidDataException("Failed to parse export_presets.cfg");
 
         var result = new Dictionary<string, BuildSettings.Platform>();
