@@ -28,6 +28,9 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         // Make sure it's existed
         Directory.CreateDirectory(buildSettings.GlobalDestinationPath);
 
+        _logger.LogDebug("Building project located on {} (solved: {}) -> {}", target.TargetLocation.SourcePath,
+            target.TargetLocation.SourcePathSolver.GetBasePath(), buildSettings.OutPathSolver.GetBasePath());
+
         _logger.LogInformation("Detected godot instances: [{}]", string.Join(',', _godotInstances));
         _logger.LogDebug("Global Godot configuration: {}", _globalGodotConfiguration);
 
