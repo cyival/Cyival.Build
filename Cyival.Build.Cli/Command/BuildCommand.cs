@@ -48,6 +48,9 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
     /// </summary>
     private void ValidatePath(ref Settings settings)
     {
+        if (string.IsNullOrEmpty(settings.Path))
+            settings.Path = ".";
+
         if (Directory.Exists(settings.Path))
         {
             var path = Path.Combine(settings.Path, "Cybuild.toml");
