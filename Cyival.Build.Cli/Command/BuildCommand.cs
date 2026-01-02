@@ -78,7 +78,7 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
     Path.Combine(settings.Path, "..", settings.OutPath, BuildApp.OutTempDirName)
         );
 
-    public override int Execute(CommandContext context, Settings settings)
+    public override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var version = typeof(BuildApp).Assembly.GetName().Version;
         AnsiConsole.MarkupLine($"[yellow]Cyival.Build[/] [dim]v{version}[/]\n");

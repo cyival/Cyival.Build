@@ -12,7 +12,7 @@ public class RootCommand : Command<RootCommand.Settings>
         public bool Version { get; set; }
     }
 
-    public override int Execute(CommandContext context, Settings settings)
+    public override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         if (settings.Version)
         {

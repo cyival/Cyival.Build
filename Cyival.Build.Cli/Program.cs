@@ -25,9 +25,10 @@ app.Configure(config =>
 
 app.Configure(cfg =>
 {
-    cfg.AddCommand<BuildCommand>("build");
-    cfg.AddCommand<BuildCommand>("b");
-    cfg.AddCommand<CleanCommand>("clean");
+    cfg.AddCommand<BuildCommand>("build")
+        .WithAlias("b");
+    cfg.AddCommand<CleanCommand>("clean")
+        .WithAlias("c");
 });
 
 return app.Run(args);

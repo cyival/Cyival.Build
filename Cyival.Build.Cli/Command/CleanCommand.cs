@@ -18,7 +18,7 @@ public sealed class CleanCommand : Command<CleanCommand.Settings>
         public bool AgreeAll { get; init; }
     }
 
-    public override int Execute(CommandContext context, Settings settings)
+    public override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var tempDirectories = Directory.GetDirectories(settings.Path, ".cybuild", SearchOption.AllDirectories);
         var directories = tempDirectories
