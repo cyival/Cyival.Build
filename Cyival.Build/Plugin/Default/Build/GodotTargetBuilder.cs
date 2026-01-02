@@ -73,9 +73,13 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         GodotConfiguration configuration)
     {
         // Get export preset
+        // TODO: Support using custom presets.
         var presets = GetExportPresets(buildSettings, target, instance);
-        var preset = presets.First(p => p.Value == buildSettings.TargetPlatform).Key;
+        var preset = presets.FirstOrDefault(p => p.Value == buildSettings.TargetPlatform).Key;
         _logger.LogInformation("Using export preset: {preset} for platform {platform}", preset, buildSettings.TargetPlatform);
+
+        if (preset is null)
+            throw new InvalidOperationException("No export presets for the platform found");
 
         // TODO: support custom output file name (read from export presets maybe)
         var outFileName = configuration.IsGodotPack ? $"{target.Id}.pck" : GetOutputFileName(buildSettings.TargetPlatform, target.Id);
