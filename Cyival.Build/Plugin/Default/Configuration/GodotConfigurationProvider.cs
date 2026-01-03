@@ -13,29 +13,30 @@ public class GodotConfigurationProvider : IConfigurationProvider<GodotConfigurat
         throw new NotSupportedException("Default is not supported.");
     }
 
-    public GodotConfiguration ParseFromTable(TomlTable table)
+    public GodotConfiguration Parse(Dictionary<string, object> data)
     {
-        GodotVersion parsedVersion = null;
-        if (table.TryGetValue("version", out var verObj))
+        GodotVersion? parsedVersion = null;
+
+        if (data.TryGetValue("version", out var verObj))
         {
             var verString = (string)verObj;
             parsedVersion = GodotVersion.Parse(verString);
         }
 
         // Default: true
-        var ignorePatch = !table.TryGetValue("ignore_patch_version", out var ignObj) || (bool)ignObj;
+        var ignorePatch = !data.TryGetValue("ignore_patch_version", out var ignObj) || (bool)ignObj;
 
         // Default: false
-        var requiredMono = table.TryGetValue("required_mono", out var monObj) && (bool)monObj;
+        var requiredMono = data.TryGetValue("required_mono", out var monObj) && (bool)monObj;
         
         // Default: false
-        var isGodotPack = table.TryGetValue("export_pack", out var packObj) && (bool)packObj;
+        var isGodotPack = data.TryGetValue("export_pack", out var packObj) && (bool)packObj;
 
         var copyArtifacts = false;
         var copyDllFilter = new List<string>();
         string? copyDllTo = null;
         
-        if (table.TryGetValue("csharp", out var csTableObj))
+        if (data.TryGetValue("csharp", out var csTableObj))
         {
             var csharpTable = (TomlTable)csTableObj;
             

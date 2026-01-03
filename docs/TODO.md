@@ -1,7 +1,7 @@
 # TODO
 
 ## Library
-- [ ] Feature: Git repository clone
+- [x] Feature: Git repository clone
 - [ ] Feature: Custom targets by Lua/GDScript
 
 ## Default Plugin
@@ -13,9 +13,8 @@
 
 ## Application
 
-- [ ] Feature: Generate `just` scripts from manifest
 - [ ] Feature: Command `run`
-- [ ] Feature: Command `clean`
+- [x] Feature: Command `clean`
 - [ ] Optional Feature: Installing Godot Instance via GodotEnv
 - [ ] Refactor: Replace `Spectre.Console`
 

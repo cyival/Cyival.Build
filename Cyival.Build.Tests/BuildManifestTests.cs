@@ -1,4 +1,4 @@
-﻿namespace Cyival.Build.Tests;
+namespace Cyival.Build.Tests;
 
 using Configuration;
 using Configuration.Dependencies;
@@ -6,12 +6,13 @@ using Build;
 
 internal class MockBuildTarget : TargetBase, IBuildTarget
 {
-    public MockBuildTarget(string id, IEnumerable<string>? requirements=null)
-         : base(string.Empty, string.Empty, id, requirements)
+#pragma warning disable CS8625
+    public MockBuildTarget(string id, IEnumerable<string>? requirements = null)
+         : base(null, string.Empty, id, requirements)
     {
-        
+
     }
-    
+
     public void SetLocalConfiguration<T>(T configuration)
     {
         throw new NotImplementedException();
@@ -36,10 +37,10 @@ public class BuildManifestTests
         // Arrange
         var manifest = new BuildManifest();
         var target = new MockBuildTarget("test", ["dependency"]);
-        
+
         // Act
         manifest.AddTarget(target);
-        
+
         // Assert
         var retrievedTarget = manifest.GetTarget("test");
         Assert.NotNull(retrievedTarget);
@@ -53,10 +54,10 @@ public class BuildManifestTests
         var manifest = new BuildManifest();
         var target1 = new MockBuildTarget("test", null);
         var target2 = new MockBuildTarget("test", null);
-        
+
         // Act
         manifest.AddTarget(target1);
-        
+
         // Assert
         var ex = Assert.Throws<ArgumentException>(() => manifest.AddTarget(target2));
         Assert.Contains("already exists", ex.Message);
@@ -67,11 +68,11 @@ public class BuildManifestTests
     {
         // Arrange
         var manifest = new BuildManifest();
-        
+
         // Act & Assert
-        #pragma warning disable CS8625
+#pragma warning disable CS8625
         Assert.Throws<ArgumentNullException>(() => manifest.AddTarget(null));
-        #pragma warning restore CS8625
+#pragma warning restore CS8625
     }
 
     [Fact]
@@ -82,7 +83,7 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("A"));
         manifest.AddTarget(new MockBuildTarget("B"));
         manifest.AddTarget(new MockBuildTarget("C"));
-        
+
         // Act & Assert (should not throw)
         manifest.CheckDependencies();
     }
@@ -95,7 +96,7 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("A"));
         manifest.AddTarget(new MockBuildTarget("B", ["A"]));
         manifest.AddTarget(new MockBuildTarget("C", ["B"]));
-        
+
         // Act & Assert (should not throw)
         manifest.CheckDependencies();
     }
@@ -106,7 +107,7 @@ public class BuildManifestTests
         // Arrange
         var manifest = new BuildManifest();
         manifest.AddTarget(new MockBuildTarget("A", ["A"]));
-        
+
         // Act & Assert
         var ex = Assert.Throws<DependencyValidationException>(() => manifest.CheckDependencies());
         Assert.Single(ex.Errors);
@@ -120,7 +121,7 @@ public class BuildManifestTests
         // Arrange
         var manifest = new BuildManifest();
         manifest.AddTarget(new MockBuildTarget("A", ["nonexistent"]));
-        
+
         // Act & Assert
         var ex = Assert.Throws<DependencyValidationException>(() => manifest.CheckDependencies());
         Assert.Single(ex.Errors);
@@ -136,7 +137,7 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("A", ["B"]));
         manifest.AddTarget(new MockBuildTarget("B", ["C"]));
         manifest.AddTarget(new MockBuildTarget("C", ["A"]));
-        
+
         // Act & Assert
         var ex = Assert.Throws<DependencyValidationException>(() => manifest.CheckDependencies());
         Assert.Single(ex.Errors);
@@ -153,15 +154,15 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("B", ["nonexistent"])); // Invalid reference
         manifest.AddTarget(new MockBuildTarget("C", ["D"]));
         manifest.AddTarget(new MockBuildTarget("D", ["C"])); // Circular reference
-        
+
         // Act & Assert
         var ex = Assert.Throws<DependencyValidationException>(() => manifest.CheckDependencies());
         Assert.Equal(3, ex.Errors.Count);
-        
+
         var selfRefCount = ex.Errors.Count(e => e.ErrorType == DependencyErrorType.SelfReference);
         var invalidRefCount = ex.Errors.Count(e => e.ErrorType == DependencyErrorType.InvalidReference);
         var circularRefCount = ex.Errors.Count(e => e.ErrorType == DependencyErrorType.CircularReference);
-        
+
         Assert.Equal(1, selfRefCount);
         Assert.Equal(1, invalidRefCount);
         Assert.Equal(1, circularRefCount);
@@ -175,10 +176,10 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("A"));
         manifest.AddTarget(new MockBuildTarget("B"));
         manifest.AddTarget(new MockBuildTarget("C"));
-        
+
         // Act
-        var ordered = manifest.GetOrderedTargets().ToList();
-        
+        var ordered = manifest.GetOrderedTargets("all").ToList();
+
         // Assert
         Assert.Equal(3, ordered.Count);
         Assert.Contains(ordered, t => t.Id == "A");
@@ -194,10 +195,10 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("A"));
         manifest.AddTarget(new MockBuildTarget("B", ["A"]));
         manifest.AddTarget(new MockBuildTarget("C", ["B"]));
-        
+
         // Act
-        var ordered = manifest.GetOrderedTargets().ToList();
-        
+        var ordered = manifest.GetOrderedTargets("all").ToList();
+
         // Assert
         Assert.Equal(3, ordered.Count);
         Assert.Equal("A", ordered[0].Id);
@@ -214,18 +215,18 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("B", ["A"]));
         manifest.AddTarget(new MockBuildTarget("C", ["A"]));
         manifest.AddTarget(new MockBuildTarget("D", ["B", "C"]));
-        
+
         // Act
-        var ordered = manifest.GetOrderedTargets().ToList();
-        
+        var ordered = manifest.GetOrderedTargets("all").ToList();
+
         // Assert
         Assert.Equal(4, ordered.Count);
-        
+
         var aIndex = ordered.FindIndex(t => t.Id == "A");
         var bIndex = ordered.FindIndex(t => t.Id == "B");
         var cIndex = ordered.FindIndex(t => t.Id == "C");
         var dIndex = ordered.FindIndex(t => t.Id == "D");
-        
+
         Assert.True(aIndex < bIndex);
         Assert.True(aIndex < cIndex);
         Assert.True(bIndex < dIndex);
@@ -242,17 +243,17 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("test-app", ["compile"]));
         manifest.AddTarget(new MockBuildTarget("package", ["test-libs", "test-app"]));
         manifest.AddTarget(new MockBuildTarget("deploy", ["package"]));
-        
+
         // Act
-        var ordered = manifest.GetOrderedTargets().ToList();
-        
+        var ordered = manifest.GetOrderedTargets("all").ToList();
+
         // Assert
         var compileIndex = ordered.FindIndex(t => t.Id == "compile");
         var testLibsIndex = ordered.FindIndex(t => t.Id == "test-libs");
         var testAppIndex = ordered.FindIndex(t => t.Id == "test-app");
         var packageIndex = ordered.FindIndex(t => t.Id == "package");
         var deployIndex = ordered.FindIndex(t => t.Id == "deploy");
-        
+
         Assert.True(compileIndex < testLibsIndex);
         Assert.True(compileIndex < testAppIndex);
         Assert.True(testLibsIndex < packageIndex);
@@ -268,9 +269,9 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("A", ["B"]));
         manifest.AddTarget(new MockBuildTarget("B", ["C"]));
         manifest.AddTarget(new MockBuildTarget("C", ["A"]));
-        
+
         // Act & Assert
-        Assert.Throws<DependencyValidationException>(() => manifest.GetOrderedTargets());
+        Assert.Throws<DependencyValidationException>(() => manifest.GetOrderedTargets("all"));
     }
 
     [Fact]
@@ -280,10 +281,10 @@ public class BuildManifestTests
         var manifest = new BuildManifest();
         manifest.AddTarget(new MockBuildTarget("A"));
         manifest.AddTarget(new MockBuildTarget("B"));
-        
+
         // Act
         var graph = new DependencyValidator(manifest.BuildTargets).GenerateDependencyGraph();
-        
+
         // Assert
         Assert.Contains("digraph BuildDependencies", graph);
         Assert.Contains("\"A\"", graph);
@@ -298,10 +299,10 @@ public class BuildManifestTests
         var manifest = new BuildManifest();
         manifest.AddTarget(new MockBuildTarget("A"));
         manifest.AddTarget(new MockBuildTarget("B", ["A"]));
-        
+
         // Act
         var graph = new DependencyValidator(manifest.BuildTargets).GenerateDependencyGraph();
-        
+
         // Assert
         Assert.Contains("digraph BuildDependencies", graph);
         Assert.Contains("\"A\"", graph);
@@ -317,7 +318,7 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("A"));
         manifest.AddTarget(new MockBuildTarget("B", ["A"]));
         manifest.AddTarget(new MockBuildTarget("C", ["B"]));
-        
+
         // Act & Assert (should not throw)
         new DependencyValidator(manifest.BuildTargets).PrintDependencyTree("C");
     }
@@ -328,7 +329,7 @@ public class BuildManifestTests
         // Arrange
         var manifest = new BuildManifest();
         manifest.AddTarget(new MockBuildTarget("A"));
-        
+
         // Act & Assert (should not throw, just print error)
         new DependencyValidator(manifest.BuildTargets).PrintDependencyTree("nonexistent");
     }
@@ -341,10 +342,10 @@ public class BuildManifestTests
         manifest.AddTarget(new MockBuildTarget("A"));
         manifest.AddTarget(new MockBuildTarget("B"));
         manifest.AddTarget(new MockBuildTarget("C"));
-        
+
         // Act
         var allTargets = manifest.GetAllTargets().ToList();
-        
+
         // Assert
         Assert.Equal(3, allTargets.Count);
         Assert.Contains(allTargets, t => t.Id == "A");
@@ -359,10 +360,10 @@ public class BuildManifestTests
         var manifest = new BuildManifest();
         var target = new MockBuildTarget("test", ["dep"]);
         manifest.AddTarget(target);
-        
+
         // Act
         var result = manifest.GetTarget("test");
-        
+
         // Assert
         Assert.NotNull(result);
         Assert.Equal("test", result.Id);
@@ -373,10 +374,10 @@ public class BuildManifestTests
     {
         // Arrange
         var manifest = new BuildManifest();
-        
+
         // Act
         var result = manifest.GetTarget("nonexistent");
-        
+
         // Assert
         Assert.Null(result);
     }
@@ -385,8 +386,9 @@ public class BuildManifestTests
 public class BuildManifestTargetSpecificTests
 {
     [Fact]
-    public void GetBuildOrder_NullTargetId_ShouldReturnAllTargets()
+    public void GetBuildOrder_NullTargetId_ShouldThrowArgumentNullException()
     {
+#pragma warning disable CS8625
         // Arrange
         var targets = new List<IBuildTarget>
         {
@@ -395,19 +397,13 @@ public class BuildManifestTargetSpecificTests
             new MockBuildTarget("C")
         };
         var validator = new DependencyValidator(targets);
-        
-        // Act
-        var result = validator.GetBuildOrder(null).ToList();
-        
-        // Assert
-        Assert.Equal(3, result.Count);
-        Assert.Contains(result, t => t.Id == "A");
-        Assert.Contains(result, t => t.Id == "B");
-        Assert.Contains(result, t => t.Id == "C");
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => validator.GetBuildOrder(null).ToList());
     }
 
     [Fact]
-    public void GetBuildOrder_EmptyTargetId_ShouldReturnAllTargets()
+    public void GetBuildOrder_EmptyTargetId_ShouldThrowArgumentException()
     {
         // Arrange
         var targets = new List<IBuildTarget>
@@ -417,15 +413,9 @@ public class BuildManifestTargetSpecificTests
             new MockBuildTarget("C")
         };
         var validator = new DependencyValidator(targets);
-        
-        // Act
-        var result = validator.GetBuildOrder("").ToList();
-        
-        // Assert
-        Assert.Equal(3, result.Count);
-        Assert.Contains(result, t => t.Id == "A");
-        Assert.Contains(result, t => t.Id == "B");
-        Assert.Contains(result, t => t.Id == "C");
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => validator.GetBuildOrder("").ToList());
     }
 
     [Fact]
@@ -438,7 +428,7 @@ public class BuildManifestTargetSpecificTests
             new MockBuildTarget("B")
         };
         var validator = new DependencyValidator(targets);
-        
+
         // Act & Assert
         var ex = Assert.Throws<ArgumentException>(() => validator.GetBuildOrder("nonexistent"));
         Assert.Contains("does not exist", ex.Message);
@@ -455,10 +445,10 @@ public class BuildManifestTargetSpecificTests
             new MockBuildTarget("C")
         };
         var validator = new DependencyValidator(targets);
-        
+
         // Act
         var result = validator.GetBuildOrder("B").ToList();
-        
+
         // Assert
         Assert.Single(result);
         Assert.Equal("B", result[0].Id);
@@ -475,10 +465,10 @@ public class BuildManifestTargetSpecificTests
             new MockBuildTarget("C")
         };
         var validator = new DependencyValidator(targets);
-        
+
         // Act
         var result = validator.GetBuildOrder("B").ToList();
-        
+
         // Assert
         Assert.Equal(2, result.Count);
         Assert.Equal("A", result[0].Id); // Dependency first
@@ -497,10 +487,10 @@ public class BuildManifestTargetSpecificTests
             new MockBuildTarget("D")
         };
         var validator = new DependencyValidator(targets);
-        
+
         // Act
         var result = validator.GetBuildOrder("C").ToList();
-        
+
         // Assert
         Assert.Equal(3, result.Count);
         Assert.Equal("A", result[0].Id);
@@ -521,17 +511,17 @@ public class BuildManifestTargetSpecificTests
             new MockBuildTarget("D")
         };
         var validator = new DependencyValidator(targets);
-        
+
         // Act
         var result = validator.GetBuildOrder("C").ToList();
-        
+
         // Assert
         Assert.Equal(3, result.Count);
-        
+
         var aIndex = result.FindIndex(t => t.Id == "A");
         var bIndex = result.FindIndex(t => t.Id == "B");
         var cIndex = result.FindIndex(t => t.Id == "C");
-        
+
         Assert.True(aIndex < cIndex);
         Assert.True(bIndex < cIndex);
         Assert.DoesNotContain(result, t => t.Id == "D"); // Should not include unrelated targets
@@ -551,22 +541,22 @@ public class BuildManifestTargetSpecificTests
             new MockBuildTarget("docs") // Unrelated target
         };
         var validator = new DependencyValidator(targets);
-        
+
         // Act
         var result = validator.GetBuildOrder("deploy").ToList();
-        
+
         // Assert
         // Should not include "docs" as it's not a dependency
         Assert.Equal(5, result.Count);
         Assert.DoesNotContain(result, t => t.Id == "docs");
-        
+
         // Check order
         var compileIndex = result.FindIndex(t => t.Id == "compile");
         var testLibsIndex = result.FindIndex(t => t.Id == "test-libs");
         var testAppIndex = result.FindIndex(t => t.Id == "test-app");
         var packageIndex = result.FindIndex(t => t.Id == "package");
         var deployIndex = result.FindIndex(t => t.Id == "deploy");
-        
+
         Assert.True(compileIndex < testLibsIndex);
         Assert.True(compileIndex < testAppIndex);
         Assert.True(testLibsIndex < packageIndex);
@@ -585,7 +575,7 @@ public class BuildManifestTargetSpecificTests
             new MockBuildTarget("C", new[] { "A" })
         };
         var validator = new DependencyValidator(targets);
-        
+
         // Act & Assert
         Assert.Throws<DependencyValidationException>(() => validator.GetBuildOrder("A"));
     }
@@ -599,7 +589,7 @@ public class BuildManifestTargetSpecificTests
             new MockBuildTarget("A", new[] { "A" })
         };
         var validator = new DependencyValidator(targets);
-        
+
         // Act & Assert
         Assert.Throws<DependencyValidationException>(() => validator.GetBuildOrder("A"));
     }
@@ -613,7 +603,7 @@ public class BuildManifestTargetSpecificTests
             new MockBuildTarget("A", new[] { "nonexistent" })
         };
         var validator = new DependencyValidator(targets);
-        
+
         // Act & Assert
         Assert.Throws<DependencyValidationException>(() => validator.GetBuildOrder("A"));
     }
@@ -636,10 +626,10 @@ public class BuildManifestExtensionTests
         {
             manifest.AddTarget(target);
         }
-        
+
         // Act
         var result = manifest.GetOrderedTargets("B").ToList();
-        
+
         // Assert
         Assert.Equal(2, result.Count);
         Assert.Equal("A", result[0].Id);
@@ -648,7 +638,7 @@ public class BuildManifestExtensionTests
     }
 
     [Fact]
-    public void GetOrderedTargets_NoTargetId_ShouldReturnAllTargets()
+    public void GetOrderedTargets_TargetIdAll_ShouldReturnAllTargets()
     {
         // Arrange
         var targets = new List<IBuildTarget>
@@ -662,10 +652,10 @@ public class BuildManifestExtensionTests
         {
             manifest.AddTarget(target);
         }
-        
+
         // Act
-        var result = manifest.GetOrderedTargets().ToList();
-        
+        var result = manifest.GetOrderedTargets("all").ToList();
+
         // Assert
         Assert.Equal(3, result.Count);
         Assert.Contains(result, t => t.Id == "A");

@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text.Json;
 using Cyival.Build.Configuration;
 using Cyival.Build.Environment;
@@ -17,17 +17,20 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
     private GodotConfiguration _globalGodotConfiguration;
 
     private readonly ILogger _logger = BuildApp.LoggerFactory.CreateLogger<GodotTargetBuilder>();
-    
+
     public BuildResult Build(IBuildTarget target, BuildSettings buildSettings)
     {
         if (!buildSettings.IsBuilding(target))
             throw new InvalidOperationException("Invalid settings provided.");
-        
+
         var buildTarget = target as GodotTarget ?? throw new InvalidOperationException("Target is not a GodotTarget");
 
         // Make sure it's existed
         Directory.CreateDirectory(buildSettings.GlobalDestinationPath);
-        
+
+        _logger.LogDebug("Building project located on {} (solved: {}) -> {}", target.TargetLocation.SourcePath,
+            target.TargetLocation.SourcePathSolver.GetBasePath(), buildSettings.OutPathSolver.GetBasePath());
+
         _logger.LogInformation("Detected godot instances: [{}]", string.Join(',', _godotInstances));
         _logger.LogDebug("Global Godot configuration: {}", _globalGodotConfiguration);
 
@@ -42,19 +45,19 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         {
             _logger.LogDebug("Local Godot configuration: {}", localConfiguration);
             configuration = TypeHelper.MergeStructs(_globalGodotConfiguration, localConfiguration);
-                    
+
             // Force to use from local configuration
             configuration.IsGodotPack = localConfiguration.IsGodotPack;
             configuration.CopySharpArtifacts = localConfiguration.CopySharpArtifacts;
             configuration.CopyArtifactsTo = localConfiguration.CopyArtifactsTo;
         }
-        
+
         _logger.LogDebug("Using godot configuration: {}", configuration);
-        
+
         // Get godot instance for building
         var godotInstance = configuration.SelectMatchOne(_godotInstances)
                             ?? throw new InvalidOperationException("No matched godot instance available");
-        
+
         _logger.LogInformation("Using godot version: {version}; path: {path}", godotInstance.Version, godotInstance.Path);
 
         return RunProcess(godotInstance,
@@ -65,19 +68,25 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
 
     private BuildResult RunProcess(
         GodotInstance instance,
-        GodotTarget target, 
-        BuildSettings buildSettings, 
+        GodotTarget target,
+        BuildSettings buildSettings,
         GodotConfiguration configuration)
     {
         // Get export preset
+        // TODO: Support using custom presets.
         var presets = GetExportPresets(buildSettings, target, instance);
-        var preset = presets.First(p => p.Value == buildSettings.TargetPlatform).Key;
+        var preset = presets.FirstOrDefault(p => p.Value == buildSettings.TargetPlatform).Key;
         _logger.LogInformation("Using export preset: {preset} for platform {platform}", preset, buildSettings.TargetPlatform);
-        
+
+        if (preset is null)
+            throw new InvalidOperationException("No export presets for the platform found");
+
         // TODO: support custom output file name (read from export presets maybe)
         var outFileName = configuration.IsGodotPack ? $"{target.Id}.pck" : GetOutputFileName(buildSettings.TargetPlatform, target.Id);
         var outPath = Path.Combine(buildSettings.GlobalDestinationPath, outFileName);
-        
+
+        var srcPath = target.TargetLocation.GlobalSourcePath;
+
         var exportArgName = configuration.IsGodotPack
             ? "--export-pack"
             : buildSettings.BuildMode switch
@@ -87,19 +96,19 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
                 _ => throw new NotSupportedException(),
             };
 
-        var startInfo = new ProcessStartInfo(instance.Path, ["--headless", 
-            "--path", buildSettings.GlobalSourcePath,
+        var startInfo = new ProcessStartInfo(instance.Path, ["--headless",
+            "--path", srcPath,
             exportArgName, preset, outPath])
         {
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
         };
-        
+
         // stdout & stderr
         var stdout = "";
         var stderr = "";
-        
+
         using var process = new Process();
         process.StartInfo = startInfo;
         process.OutputDataReceived += (sender, args) =>
@@ -113,30 +122,30 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         process.ErrorDataReceived += (sender, args) =>
         {
             if (string.IsNullOrEmpty(args.Data)) return;
-            
+
             _logger.LogError("{}", args.Data);
             stderr += args.Data;
-            #if !DEBUG
+#if !DEBUG
             BuildApp.ConsoleRedirector.WriteLine(args.Data);
-            #endif
+#endif
         };
 
         _logger.LogInformation("Running command: {filename} {arguments}", startInfo.FileName, string.Join(' ', startInfo.ArgumentList));
         process.Start();
-        
+
         // To avoid deadlocks, use an asynchronous read operation on at least one of the streams.
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
 
         process.WaitForExit();
-        
+
         _logger.LogInformation("Godot process exited with code {code}", process.ExitCode);
         //_logger.LogTrace("STDOUT: {}", stdout);
-        File.WriteAllText(buildSettings.OutTempPathSolver.GetPathTo("stdout.txt") ,stdout);
+        File.WriteAllText(buildSettings.OutTempPathSolver.GetPathTo("stdout.txt"), stdout);
         _logger.LogInformation("STDERR: {}", stderr);
-        
+
         // Copy dlls for godot pack
-        if (configuration.CopySharpArtifacts && Directory.GetFiles(buildSettings.GlobalSourcePath, "*.csproj").Length != 0)
+        if (configuration.CopySharpArtifacts && Directory.GetFiles(srcPath, "*.csproj").Length != 0)
             CopySharpArtifacts(target, buildSettings, configuration);
 
         if (process.ExitCode != 0)
@@ -144,21 +153,21 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
 
         if (stderr.Contains("WARNING"))
             return BuildResult.Warning;
-        
+
         return BuildResult.Success;
     }
 
     private void CopySharpArtifacts(IBuildTarget target, BuildSettings buildSettings, GodotConfiguration configuration)
     {
         _logger.LogInformation("Copying Dlls");
-        
+
         var filters = configuration.CopyArtifactsFilter;
         if (filters.Length == 0)
-            filters = Directory.GetFiles(buildSettings.GlobalSourcePath, "*.csproj", SearchOption.AllDirectories)
+            filters = Directory.GetFiles(target.TargetLocation.GlobalSourcePath, "*.csproj", SearchOption.AllDirectories)
                 .Select(d => (Path.GetFileNameWithoutExtension(d) ?? throw new NullReferenceException()) + ".dll")
                 .ToArray();
 
-        var binPath = buildSettings.SourcePathSolver.GetPathTo(".godot", "mono", "temp", "bin");
+        var binPath = target.TargetLocation.SourcePathSolver.GetPathTo(".godot", "mono", "temp", "bin");
 
         // TODO
         binPath = Path.Combine(binPath, buildSettings.BuildMode switch
@@ -176,7 +185,7 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
 
         var dest = buildSettings.OutPathSolver.GetPathTo(configuration.CopyArtifactsTo ?? "");
         Directory.CreateDirectory(dest);
-        
+
         foreach (var obj in objs)
         {
             var to = Path.Combine(dest, Path.GetFileName(obj));
@@ -187,40 +196,41 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
 
     private Dictionary<string, BuildSettings.Platform> GetExportPresets(BuildSettings settings, GodotTarget target, GodotInstance instance)
     {
-        var presetPath = settings.SourcePathSolver.GetPathTo("export_presets.cfg");
+        var presetPath = target.TargetLocation.SourcePathSolver.GetPathTo("export_presets.cfg");
 
         if (!File.Exists(presetPath))
             throw new FileNotFoundException("Could not find export_presets.cfg", presetPath);
 
-        var rawData = GodotConfigConverter.ConvertByGodotInstance(settings.OutPathSolver, instance, presetPath)
+        var rawData = GodotConfigConverter.ConvertByGodotInstance(settings, instance, presetPath)
             ?? throw new InvalidDataException("Failed to parse export_presets.cfg");
 
         var result = new Dictionary<string, BuildSettings.Platform>();
-        
+
         foreach (var kvp in rawData)
         {
             _logger.LogDebug("Parsing preset: {preset}", kvp.Key);
             var preset = ((JsonElement)kvp.Value).Deserialize<Dictionary<string, object>>()
                 ?? throw new InvalidDataException("Failed to parse preset data");
-            
+
             if (!preset.ContainsKey("name") || !preset.ContainsKey("platform"))
                 continue;
 
             var name = ((JsonElement)preset["name"]).Deserialize<string>();
             var platform = ((JsonElement)preset["platform"]).Deserialize<string>();
-            
+
             if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(platform))
                 throw new InvalidDataException("Failed to parse preset name or platform");
-            
+
             result.Add(name, ParsePlatform(platform));
         }
 
         return result;
     }
-    
+
     private static BuildSettings.Platform ParsePlatform(string platformStr) => platformStr switch
     {
         "Windows Desktop" => BuildSettings.Platform.Windows,
+        "Linux" => BuildSettings.Platform.Linux,
         "Linux/X11" => BuildSettings.Platform.Linux,
         "macOS" => BuildSettings.Platform.MacOS,
         _ => throw new NotSupportedException($"Platform {platformStr} is not supported.")
@@ -238,7 +248,7 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
 
         return baseName + extension;
     }
-    
+
     public Type[] GetRequiredEnvironmentTypes() => [typeof(GodotInstance)];
 
     public Type[] GetRequiredConfigurationTypes() => [typeof(GodotConfiguration)];
@@ -257,9 +267,9 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         var godotInstances = instances as GodotInstance[] ?? instances.ToArray();
         if (godotInstances.Length == 0)
             throw new InvalidOperationException("No Godot instances provided");
-        
+
         _godotInstances = godotInstances.OrderBy(t => t.Version).ToList();
-        
+
         var godotConfiguration = globalConfiguration.OfType<GodotConfiguration>().ToArray();
         if (godotConfiguration.Length > 0)
             _globalGodotConfiguration = godotConfiguration.First();

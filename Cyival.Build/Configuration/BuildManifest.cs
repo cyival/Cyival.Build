@@ -1,4 +1,4 @@
-﻿using Cyival.Build.Build;
+using Cyival.Build.Build;
 using Cyival.Build.Configuration.Dependencies;
 
 namespace Cyival.Build.Configuration;
@@ -18,14 +18,14 @@ namespace Cyival.Build.Configuration;
 /// </summary>
 public class BuildManifest
 {
-    public List<IBuildTarget> BuildTargets { get; init; } = [];
-    
-    public List<object> GlobalConfigurations { get; init; } = [];
-    
+    public List<IBuildTarget> BuildTargets { get; set; } = [];
+
+    public List<object> GlobalConfigurations { get; set; } = [];
+
     public bool DependencyCheckPerformed { get; private set; } = false;
- 
+
     public string ManifestPath { get; init; }
-    
+
     public void CheckDependencies()
     {
         var validator = new DependencyValidator(BuildTargets);
@@ -40,26 +40,31 @@ public class BuildManifest
         {
             throw new ArgumentNullException(nameof(target), "Target cannot be null.");
         }
-        
+
+        if (target.Id == "all")
+        {
+            throw new ArgumentException($"Invaild target id 'all'.");
+        }
+
         if (BuildTargets.Any(t => t.Id == target.Id))
         {
             throw new ArgumentException($"A target with ID '{target.Id}' already exists in the manifest.");
         }
-        
+
         BuildTargets.Add(target);
 
         DependencyCheckPerformed = false;
     }
-    
+
     /// <summary>
-    /// Gets targets in dependency order, optionally for a specific target
+    /// Gets targets in dependency order
     /// </summary>
-    /// <param name="targetId">ID of the target to build, or null to build all targets</param>
+    /// <param name="targetId">ID of the target to build, or `all` to build all targets</param>
     /// <returns>List of targets in dependency order</returns>
-    public IReadOnlyList<IBuildTarget> GetOrderedTargets(string? targetId = null)
+    public IReadOnlyList<IBuildTarget> GetOrderedTargets(string targetId, bool depOnly = false)
     {
         var validator = new DependencyValidator(BuildTargets);
-        return validator.GetBuildOrder(targetId);
+        return depOnly ? validator.GetDependenciesBuildOrder(targetId) : validator.GetBuildOrder(targetId);
     }
 
     public IBuildTarget? GetTarget(string id) => BuildTargets.FirstOrDefault(t => t.Id == id);
@@ -68,7 +73,7 @@ public class BuildManifest
 
     public string? GetDefaultTargetId()
     {
-        return BuildTargets.Count > 1 ? 
+        return BuildTargets.Count > 1 ?
                BuildTargets.SingleOrDefault(t => t.IsDefault)?.Id :
                BuildTargets.FirstOrDefault()?.Id;
     }

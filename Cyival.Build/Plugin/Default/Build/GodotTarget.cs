@@ -1,4 +1,5 @@
-﻿using Cyival.Build.Build;
+using Cyival.Build.Build;
+using Cyival.Build.Configuration;
 
 namespace Cyival.Build.Plugin.Default.Build;
 
@@ -7,7 +8,7 @@ using Configuration;
 public class GodotTarget : TargetBase, IBuildTarget
 {
     private GodotConfiguration? _localConfiguration;
-    
+
     public void SetLocalConfiguration<T>(T configuration)
     {
         if (configuration is GodotConfiguration godotConfiguration)
@@ -38,9 +39,9 @@ public class GodotTarget : TargetBase, IBuildTarget
         return false;
     }
 
-    public GodotTarget(string path, string dest, string id, IEnumerable<string>? requirements = null)
-         : base(path, dest, id, requirements)
+    public GodotTarget(ITargetLocation tl, string dest, string id, IEnumerable<string>? requirements = null)
+         : base(tl, dest, id, requirements)
     {
-        
+
     }
 }

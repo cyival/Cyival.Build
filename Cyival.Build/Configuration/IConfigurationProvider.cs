@@ -12,8 +12,8 @@ public interface IConfigurationProvider<out T> : IConfigurationProviderBase
     object IConfigurationProviderBase.GetDefaultConfigurationAsObject() 
         => GetDefaultConfiguration();
 
-    T ParseFromTable(TomlTable table);
+    T Parse(Dictionary<string, object> data);
 
-    object IConfigurationProviderBase.ParseFromTableAsObject(TomlTable table)
-        => ParseFromTable(table);
+    object IConfigurationProviderBase.ParseAsObject(Dictionary<string, object> data)
+        => Parse(data);
 }

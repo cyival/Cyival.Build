@@ -10,7 +10,7 @@ using Environment;
 public struct GodotConfiguration
 {
     // TODO: Make all these into class GodotVersionRange.
-    public GodotVersion SpecifiedVersion { get; init; }
+    public GodotVersion? SpecifiedVersion { get; init; }
     public bool IgnorePatch { get; init; }
     public bool RequiredMono { get; init; }
 

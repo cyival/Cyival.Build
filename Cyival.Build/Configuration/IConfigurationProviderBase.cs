@@ -6,7 +6,7 @@ public interface IConfigurationProviderBase
 {
     Type ProvidedType { get; }
     
-    object ParseFromTableAsObject(TomlTable table);
+    object ParseAsObject(Dictionary<string, object> data);
 
     object GetDefaultConfigurationAsObject();
 }
