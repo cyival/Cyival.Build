@@ -1,8 +1,8 @@
 # Cyival.Build
 
 [![Test on Commit](https://github.com/cyival/Cyival.Build/actions/workflows/test.yml/badge.svg)](https://github.com/cyival/Cyival.Build/actions/workflows/test.yml)
-![NuGet Version](https://img.shields.io/nuget/v/Cyival.Build.Cli)
-![GitHub License](https://img.shields.io/github/license/cyival/Cyival.Build)
+[![NuGet Version](https://img.shields.io/nuget/v/Cyival.Build.Cli)](https://www.nuget.org/packages/Cyival.Build.Cli)
+[![GitHub License](https://img.shields.io/github/license/cyival/Cyival.Build)](https://github.com/cyival/Cyival.Build?tab=Apache-2.0-1-ov-file)
 
 A build tool for Godot projects.
 
