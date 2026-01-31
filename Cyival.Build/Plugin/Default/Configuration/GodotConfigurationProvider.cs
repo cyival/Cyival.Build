@@ -28,18 +28,18 @@ public class GodotConfigurationProvider : IConfigurationProvider<GodotConfigurat
 
         // Default: false
         var requiredMono = data.TryGetValue("required_mono", out var monObj) && (bool)monObj;
-        
+
         // Default: false
         var isGodotPack = data.TryGetValue("export_pack", out var packObj) && (bool)packObj;
 
         var copyArtifacts = false;
         var copyDllFilter = new List<string>();
         string? copyDllTo = null;
-        
+
         if (data.TryGetValue("csharp", out var csTableObj))
         {
-            var csharpTable = (TomlTable)csTableObj;
-            
+            var csharpTable = (Dictionary<string, object>)csTableObj;
+
             // Default: false
             if (csharpTable.TryGetValue("artifacts", out var copyDllObj))
                 copyArtifacts = (bool)copyDllObj;
@@ -56,7 +56,7 @@ public class GodotConfigurationProvider : IConfigurationProvider<GodotConfigurat
             if (csharpTable.TryGetValue("artifacts_output", out var copyDllDestObj))
                 copyDllTo = (string)copyDllDestObj;
         }
-        
+
         return new GodotConfiguration
         {
             SpecifiedVersion = parsedVersion,
@@ -65,7 +65,7 @@ public class GodotConfigurationProvider : IConfigurationProvider<GodotConfigurat
             IsGodotPack = isGodotPack,
             PreferredExportPresets = [],
             CopySharpArtifacts = copyArtifacts,
-            CopyArtifactsFilter = copyDllFilter.ToArray(),
+            CopyArtifactsFilter = [.. copyDllFilter],
             CopyArtifactsTo = copyDllTo,
         };
     }
