@@ -119,7 +119,7 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
             if (string.IsNullOrEmpty(args.Data)) return;
 
             _logger.LogTrace("{}", args.Data);
-            stdout += args.Data;
+            stdout += args.Data + "\n";
             BuildApp.ConsoleRedirector.WriteLine(args.Data);
         };
         process.ErrorDataReceived += (sender, args) =>
@@ -127,7 +127,7 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
             if (string.IsNullOrEmpty(args.Data)) return;
 
             _logger.LogError("{}", args.Data);
-            stderr += args.Data;
+            stderr += args.Data + "\n";
 #if !DEBUG
             BuildApp.ConsoleRedirector.WriteLine(args.Data);
 #endif
@@ -144,7 +144,8 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
 
         _logger.LogInformation("Godot process exited with code {code}", process.ExitCode);
         //_logger.LogTrace("STDOUT: {}", stdout);
-        File.WriteAllText(buildSettings.OutTempPathSolver.GetPathTo("stdout.txt"), stdout);
+        File.AppendAllText(buildSettings.OutTempPathSolver.GetPathTo("stdout.txt"), stdout);
+        File.AppendAllText(buildSettings.OutTempPathSolver.GetPathTo("stderr.txt"), stderr);
         _logger.LogInformation("STDERR: {}", stderr);
 
         // Copy dlls for godot pack
