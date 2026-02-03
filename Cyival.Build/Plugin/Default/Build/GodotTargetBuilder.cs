@@ -169,11 +169,11 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
 
         var binPath = target.TargetLocation.SourcePathSolver.GetPathTo(".godot", "mono", "temp", "bin");
 
-        // TODO
+        // TODO: Support cybuild-godot plugin
         binPath = Path.Combine(binPath, buildSettings.BuildMode switch
         {
-            BuildSettings.Mode.Debug => "Debug",
-            BuildSettings.Mode.Release => "Release",
+            BuildSettings.Mode.Debug => "ExportDebug",
+            BuildSettings.Mode.Release => "ExportRelease",
             _ => throw new NotSupportedException(),
         });
 
