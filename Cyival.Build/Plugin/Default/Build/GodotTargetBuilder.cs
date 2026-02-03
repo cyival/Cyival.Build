@@ -148,13 +148,18 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         File.AppendAllText(buildSettings.OutTempPathSolver.GetPathTo("stderr.txt"), stderr);
         _logger.LogInformation("STDERR: {}", stderr);
 
-        // Copy dlls for godot pack
+        // Copy dlls for godot pack.
         if (configuration.CopySharpArtifacts && Directory.GetFiles(srcPath, "*.csproj").Length != 0)
             CopySharpArtifacts(target, buildSettings, configuration);
 
         if (process.ExitCode != 0)
             return BuildResult.Failed;
 
+        // TODO: A bad hard-coded check for failed build
+        if (stderr.Contains("Export .NET Project: Failed to build project."))
+            return BuildResult.Failed;
+
+        // Warning check should placed at last.
         if (stderr.Contains("WARNING"))
             return BuildResult.Warning;
 
