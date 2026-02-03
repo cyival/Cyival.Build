@@ -31,7 +31,7 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         _logger.LogDebug("Building project located on {} (solved: {}) -> {}", target.TargetLocation.SourcePath,
             target.TargetLocation.SourcePathSolver.GetBasePath(), buildSettings.OutPathSolver.GetBasePath());
 
-        _logger.LogInformation("Detected godot instances: [{}]", string.Join(',', _godotInstances));
+        _logger.LogInformation("Detected godot instances: \n{}", string.Join('\n', _godotInstances));
         _logger.LogDebug("Global Godot configuration: {}", _globalGodotConfiguration);
 
         // Get configuration
@@ -81,7 +81,10 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         if (preset is null)
             throw new InvalidOperationException("No export presets for the platform found");
 
-        // TODO: support custom output file name (read from export presets maybe)
+        // TODO: support custom output file name
+        // 1. provided by user
+        // 2. read from export presets maybe
+        // 3. use default name based on platform and target id
         var outFileName = configuration.IsGodotPack ? $"{target.Id}.pck" : GetOutputFileName(buildSettings.TargetPlatform, target.Id);
         var outPath = Path.Combine(buildSettings.GlobalDestinationPath, outFileName);
 
@@ -116,7 +119,7 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
             if (string.IsNullOrEmpty(args.Data)) return;
 
             _logger.LogTrace("{}", args.Data);
-            stdout += args.Data;
+            stdout += args.Data + "\n";
             BuildApp.ConsoleRedirector.WriteLine(args.Data);
         };
         process.ErrorDataReceived += (sender, args) =>
@@ -124,7 +127,7 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
             if (string.IsNullOrEmpty(args.Data)) return;
 
             _logger.LogError("{}", args.Data);
-            stderr += args.Data;
+            stderr += args.Data + "\n";
 #if !DEBUG
             BuildApp.ConsoleRedirector.WriteLine(args.Data);
 #endif
@@ -141,16 +144,22 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
 
         _logger.LogInformation("Godot process exited with code {code}", process.ExitCode);
         //_logger.LogTrace("STDOUT: {}", stdout);
-        File.WriteAllText(buildSettings.OutTempPathSolver.GetPathTo("stdout.txt"), stdout);
+        File.AppendAllText(buildSettings.OutTempPathSolver.GetPathTo("stdout.txt"), stdout);
+        File.AppendAllText(buildSettings.OutTempPathSolver.GetPathTo("stderr.txt"), stderr);
         _logger.LogInformation("STDERR: {}", stderr);
 
-        // Copy dlls for godot pack
+        // Copy dlls for godot pack.
         if (configuration.CopySharpArtifacts && Directory.GetFiles(srcPath, "*.csproj").Length != 0)
             CopySharpArtifacts(target, buildSettings, configuration);
 
         if (process.ExitCode != 0)
             return BuildResult.Failed;
 
+        // TODO: A bad hard-coded check for failed build
+        if (stderr.Contains("Export .NET Project: Failed to build project."))
+            return BuildResult.Failed;
+
+        // Warning check should placed at last.
         if (stderr.Contains("WARNING"))
             return BuildResult.Warning;
 
@@ -169,11 +178,11 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
 
         var binPath = target.TargetLocation.SourcePathSolver.GetPathTo(".godot", "mono", "temp", "bin");
 
-        // TODO
-        binPath = Path.Combine(binPath, buildSettings.BuildMode switch
+        // TODO: Support cybuild-godot plugin
+        binPath = Path.Combine(binPath, configuration.IsGodotPack ? "ExportRelease" : buildSettings.BuildMode switch
         {
-            BuildSettings.Mode.Debug => "Debug",
-            BuildSettings.Mode.Release => "Release",
+            BuildSettings.Mode.Debug => "ExportDebug",
+            BuildSettings.Mode.Release => "ExportRelease",
             _ => throw new NotSupportedException(),
         });
 

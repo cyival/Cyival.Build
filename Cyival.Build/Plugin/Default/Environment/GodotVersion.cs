@@ -2,14 +2,14 @@
 
 namespace Cyival.Build.Plugin.Default.Environment;
 
-public record GodotVersion(int Major, int Minor, int Patch = 0, 
+public record GodotVersion(int Major, int Minor, int Patch = 0,
     GodotChannel Channel = GodotChannel.Stable, int StatusVersion = 0) : IComparable<GodotVersion>
 {
     public int CompareTo(GodotVersion? other)
     {
         if (other is null)
             return 1;
-        
+
         var majorComparison = Major.CompareTo(other.Major);
         if (majorComparison != 0) return majorComparison;
         var minorComparison = Minor.CompareTo(other.Minor);
@@ -20,14 +20,14 @@ public record GodotVersion(int Major, int Minor, int Patch = 0,
         if (channelComparison != 0) return channelComparison;
         return StatusVersion.CompareTo(other.StatusVersion);
     }
-    
+
     public static GodotVersion Parse(string version)
     {
         ArgumentException.ThrowIfNullOrEmpty(version, nameof(version));
 
         // Remove leading 'v' and split by dots and hyphens
         var parts = version.TrimStart('v').Split(['.', '-']);
-    
+
         if (parts.Length < 2)
             throw new FormatException("Invalid version format. Expected at least major.minor");
 
@@ -65,14 +65,14 @@ public record GodotVersion(int Major, int Minor, int Patch = 0,
     {
         statusVersion = 0;
         channel = GodotChannel.Stable;
-        
+
         // Skip empty parts
         if (string.IsNullOrWhiteSpace(input))
             return false;
-        
+
         // Use regex to separate channel name from status version
         var match = Regex.Match(input, @"^([a-zA-Z]+)(\d*)$");
-        
+
         if (!match.Success)
             return input.Equals("stable", StringComparison.OrdinalIgnoreCase);
 
@@ -87,10 +87,28 @@ public record GodotVersion(int Major, int Minor, int Patch = 0,
             "stable" => GodotChannel.Stable,
             _ => (GodotChannel)(-1) // Invalid channel
         };
-            
+
         if (channel == (GodotChannel)(-1))
             return false;
 
         return string.IsNullOrEmpty(statusString) || int.TryParse(statusString, out statusVersion);
+    }
+
+    public override string ToString()
+    {
+        return $"{Major}.{Minor}.{Patch}-{GetChannelName(Channel)}{(StatusVersion > 0 ? $".{StatusVersion}" : "")}";
+    }
+
+    public string GetChannelName(GodotChannel channel)
+    {
+        string channelName = channel switch
+        {
+            GodotChannel.Dev => "dev",
+            GodotChannel.Beta => "beta",
+            GodotChannel.ReleaseCandidate => "rc",
+            GodotChannel.Stable => "stable",
+            _ => "unknown"
+        };
+        return channelName;
     }
 }

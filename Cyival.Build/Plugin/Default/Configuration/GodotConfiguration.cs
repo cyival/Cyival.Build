@@ -6,6 +6,7 @@ using Cyival.Build.Configuration;
 namespace Cyival.Build.Plugin.Default.Configuration;
 
 using Environment;
+using Microsoft.Extensions.Logging;
 
 public struct GodotConfiguration
 {
@@ -15,11 +16,11 @@ public struct GodotConfiguration
     public bool RequiredMono { get; init; }
 
     public Dictionary<BuildSettings.Platform, string> PreferredExportPresets { get; init; } // TODO
-    
+
     public bool IsGodotPack { get; set; }
 
     public bool CopySharpArtifacts { get; set; }
-    
+
     public string[] CopyArtifactsFilter { get; set; }
 
     public string? CopyArtifactsTo { get; set; }
@@ -28,19 +29,21 @@ public struct GodotConfiguration
     {
         var ver = SpecifiedVersion;
         GodotInstance selectMatchOne;
+
         if (RequiredMono)
         {
             instances = instances.Where(t => t.Mono);
         }
+
         if (!IgnorePatch)
         {
-            selectMatchOne = instances.FirstOrDefault(t=> t.Version == ver);
+            selectMatchOne = instances.OrderBy(t => t.Version).LastOrDefault(t => t.Version == ver);
         }
         else
         {
-            var matchInstances = instances.Where(t => t.Version.Major == ver.Major && 
+            var matchInstances = instances.Where(t => t.Version.Major == ver.Major &&
                                                               t.Version.Minor == ver.Minor).OrderBy(t => t.Version);
-            selectMatchOne = matchInstances.FirstOrDefault();
+            selectMatchOne = matchInstances.LastOrDefault();
         }
 
         if (selectMatchOne == default)

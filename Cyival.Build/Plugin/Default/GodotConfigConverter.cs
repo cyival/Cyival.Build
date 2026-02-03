@@ -36,8 +36,6 @@ public class GodotConfigConverter
             return JSON.stringify(dict)
         """;
 
-    private static ILogger<GodotConfigConverter> _logger => BuildApp.LoggerFactory.CreateLogger<GodotConfigConverter>();
-
     public static Dictionary<string, object> ConvertByGodotInstance(BuildSettings buildSettings, GodotInstance instance, string path)
     {
         if (instance.Version.Major != 4)
@@ -51,7 +49,6 @@ public class GodotConfigConverter
         {
             RedirectStandardOutput = true,
         };
-        _logger.LogDebug("Running {} with {}", startInfo.FileName, startInfo.ArgumentList);
 
         var proc = Process.Start(startInfo)
             ?? throw new InvalidOperationException("Failed to start godot process for parsing config.");
@@ -67,9 +64,6 @@ public class GodotConfigConverter
 
             json += line;
         }
-
-        _logger
-            .LogInformation("Parsed config json: {json}", json);
 
         var parsed = JsonSerializer.Deserialize<Dictionary<string, object>>(json)
             ?? throw new NullReferenceException("Failed to parse config json.");
