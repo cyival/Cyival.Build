@@ -105,6 +105,7 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
 
         BuildApp.ConsoleRedirector = new AnsiConsoleRedirector();
 
+        BuildApp.LoggerFactory.CreateLogger("Cli").LogInformation("Build started at {0}", DateTime.Now);
         var stopwatch = Stopwatch.StartNew();
 
         AnsiConsole.Status()

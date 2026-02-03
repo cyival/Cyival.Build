@@ -9,7 +9,7 @@ public partial record struct GodotInstance
     public string Path;
 
     public bool Mono { get; private set; }
-    
+
     public GodotInstance(GodotVersion version, string path)
     {
         if (ValidatePath(path) is null)
@@ -43,7 +43,7 @@ public partial record struct GodotInstance
                 RedirectStandardOutput = true
             };
             using var process = Process.Start(startInfo);
-            
+
             while (!process.StandardOutput.EndOfStream)
                 versionString += process.StandardOutput.ReadLine();
 
@@ -56,4 +56,6 @@ public partial record struct GodotInstance
             return null;
         }
     }
+
+    public override string ToString() => $"{Version}\n\tPath: {Path}\n\tMono: {Mono}";
 }
