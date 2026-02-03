@@ -167,9 +167,9 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
             AnsiConsole.WriteLine(); // Use `\n` seems will cause a weird output, so I used `WriteLine()` instead.
             ctx.Status($"Building ... ({buildApp.GetCurrentIndex() + 1} of {buildApp.GetTotalTargets()})");
 
-            buildContext.Build();
+            var result = buildContext.Build();
 
-            AnsiConsole.MarkupLine($"   Successfully built [yellow bold]{buildContext.TargetId}[/]");
+            AnsiConsole.MarkupLine($"   Successfully built [yellow bold]{buildContext.TargetId}[/]{(result == BuildResult.Warning ? " with warnings" : "")}");
             AnsiConsole.WriteLine();
         }
 

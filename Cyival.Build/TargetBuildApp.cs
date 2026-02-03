@@ -49,7 +49,7 @@ public class TargetBuildApp(
         public IEnumerable<string> Requirements => target.Requirements;
         public string TargetType;
 
-        public void Build()
+        public BuildResult Build()
         {
             if (!Requirements.All(app._buildResults.ContainsKey))
             {
@@ -74,6 +74,8 @@ public class TargetBuildApp(
                 throw new Exception("Failed to build target " + TargetId);
 
             app._buildResults[TargetId] = result;
+
+            return result;
 
             /*app._buildResults[TargetId] = new BuildResult
             {
