@@ -8,10 +8,6 @@
         <Copyright>Copyright © 2025 Cyival Games</Copyright>
     </PropertyGroup>
 
-    <PropertyGroup>
-        <Version>0.2.0</Version>
-    </PropertyGroup>
-
     <ItemGroup>
       <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.8" />
