@@ -13,14 +13,43 @@ public class AnsiConsoleLogger(string name) : ILogger
         if (!IsEnabled(logLevel))
             return;
 
-        var level = Enum.GetName(logLevel)?[..3]?.ToUpper() ?? "";
-        
-        AnsiConsole.WriteLine($"[{name}] {level,-4}: {formatter(state, exception)}");
+        var level = GetLevelName(logLevel); //Enum.GetName(logLevel)?[..3]?.ToUpper() ?? "";
+
+        // TODO: Give an option for no color
+        AnsiConsole.MarkupLine($"[gray][[{name}]][/] [{GetLevelColor(logLevel)}]{level,5}[/]: {formatter(state, exception).EscapeMarkup()}");
     }
 
     public bool IsEnabled(LogLevel logLevel) => true;
 
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull => default!;
+
+    private string GetLevelColor(LogLevel logLevel)
+    {
+        return logLevel switch
+        {
+            LogLevel.Trace => "gray",
+            LogLevel.Debug => "gray",
+            LogLevel.Information => "green",
+            LogLevel.Warning => "yellow",
+            LogLevel.Error => "red",
+            LogLevel.Critical => "red",
+            _ => "gray"
+        };
+    }
+
+    private string GetLevelName(LogLevel logLevel)
+    {
+        return logLevel switch
+        {
+            LogLevel.Trace => "TRACE",
+            LogLevel.Debug => "DEBUG",
+            LogLevel.Information => "INFO",
+            LogLevel.Warning => "WARN",
+            LogLevel.Error => "ERROR",
+            LogLevel.Critical => "CRIT",
+            _ => Enum.GetName(logLevel) ?? logLevel.ToString(),
+        };
+    }
 }
 
 [ProviderAlias("AnsiConsole")]
