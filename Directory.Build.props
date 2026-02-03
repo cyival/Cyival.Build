@@ -1,6 +1,5 @@
 <Project>
     <PropertyGroup>
         <Version>0.2.1</Version>
-        <PackageReadmeFile>$(SolutionDir)README.md</PackageReadmeFile>
     </PropertyGroup>
 </Project>
