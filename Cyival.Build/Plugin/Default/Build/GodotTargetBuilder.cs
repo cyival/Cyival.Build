@@ -81,7 +81,10 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         if (preset is null)
             throw new InvalidOperationException("No export presets for the platform found");
 
-        // TODO: support custom output file name (read from export presets maybe)
+        // TODO: support custom output file name
+        // 1. provided by user
+        // 2. read from export presets maybe
+        // 3. use default name based on platform and target id
         var outFileName = configuration.IsGodotPack ? $"{target.Id}.pck" : GetOutputFileName(buildSettings.TargetPlatform, target.Id);
         var outPath = Path.Combine(buildSettings.GlobalDestinationPath, outFileName);
 
@@ -170,7 +173,7 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         var binPath = target.TargetLocation.SourcePathSolver.GetPathTo(".godot", "mono", "temp", "bin");
 
         // TODO: Support cybuild-godot plugin
-        binPath = Path.Combine(binPath, buildSettings.BuildMode switch
+        binPath = Path.Combine(binPath, configuration.IsGodotPack ? "ExportRelease" : buildSettings.BuildMode switch
         {
             BuildSettings.Mode.Debug => "ExportDebug",
             BuildSettings.Mode.Release => "ExportRelease",
