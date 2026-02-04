@@ -4,7 +4,7 @@ using Spectre.Console.Cli;
 
 namespace Cyival.Build.Cli.Command;
 
-public class RootCommand : Command<RootCommand.Settings>
+public class RootCommand(IAnsiConsole ansiConsole) : Command<RootCommand.Settings>
 {
     public class Settings : CommandSettings
     {
@@ -12,16 +12,16 @@ public class RootCommand : Command<RootCommand.Settings>
         public bool Version { get; set; }
     }
 
-    public override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    protected override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         if (settings.Version)
         {
             var version = typeof(BuildApp).Assembly.GetName().Version;
-            Console.WriteLine(version);
+            ansiConsole.WriteLine($"{version}");
             return 0;
         }
 
-        AnsiConsole.WriteLine("Use a subcommand or --help for more info.");
+        ansiConsole.WriteLine("Use a subcommand or --help for more info.");
         return 0;
     }
 }

@@ -1,6 +1,7 @@
 using System.Threading;
 using Cyival.Build.Cli.Command;
 using Spectre.Console.Cli;
+using Spectre.Console.Cli.Testing;
 
 namespace Cyival.Build.Tests;
 
@@ -9,6 +10,7 @@ public class CleanCommandTests
     [Fact]
     public void Execute_NoManifest_ShouldAbortAndNotDelete()
     {
+        // Arrange
         var temp = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         Directory.CreateDirectory(temp);
 
@@ -16,20 +18,24 @@ public class CleanCommandTests
         Directory.CreateDirectory(proj);
         Directory.CreateDirectory(Path.Combine(proj, ".cybuild"));
 
-        var settings = new CleanCommand.Settings { Path = temp, AgreeAll = true };
-        var cmd = new CleanCommand();
+        var app = new CommandAppTester();
+        app.SetDefaultCommand<CleanCommand>();
 
-        var rc = cmd.Execute(default(CommandContext), settings, CancellationToken.None);
+        // Act
+        var result = app.Run(temp, "-y");
 
-        Assert.Equal(1, rc);
+        // Assert
+        Assert.Equal(1, result.ExitCode);
         Assert.True(Directory.Exists(Path.Combine(proj, ".cybuild")));
 
+        // Cleanup
         Directory.Delete(temp, true);
     }
 
     [Fact]
     public void Execute_WithManifest_DeletesUpToDepthTwoOnly()
     {
+        // Arrange
         var temp = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         Directory.CreateDirectory(temp);
 
@@ -57,12 +63,13 @@ public class CleanCommandTests
         Directory.CreateDirectory(proj3);
         Directory.CreateDirectory(Path.Combine(proj3, ".cybuild"));
 
-        var settings = new CleanCommand.Settings { Path = temp, AgreeAll = true };
-        var cmd = new CleanCommand();
+        var app = new CommandAppTester();
+        app.SetDefaultCommand<CleanCommand>();
 
-        var rc = cmd.Execute(default(CommandContext), settings, CancellationToken.None);
+        // Act
+        var result = app.Run(temp, "-y");
 
-        Assert.Equal(0, rc);
+        Assert.Equal(0, result.ExitCode);
         Assert.False(Directory.Exists(proj1));
         Assert.False(Directory.Exists(proj2));
         Assert.True(Directory.Exists(proj3));

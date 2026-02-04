@@ -5,7 +5,7 @@ using Spectre.Console.Cli;
 namespace Cyival.Build.Cli.Command;
 
 [Description("Clean output directories")]
-public sealed class CleanCommand : Command<CleanCommand.Settings>
+public sealed class CleanCommand(IAnsiConsole ansiConsole) : Command<CleanCommand.Settings>
 {
     public sealed class Settings : CommandSettings
     {
@@ -18,7 +18,7 @@ public sealed class CleanCommand : Command<CleanCommand.Settings>
         public bool AgreeAll { get; init; }
     }
 
-    public override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    protected override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var startPath = Path.GetFullPath(settings.Path);
 
@@ -39,7 +39,7 @@ public sealed class CleanCommand : Command<CleanCommand.Settings>
 
         if (manifestDir is null)
         {
-            AnsiConsole.MarkupLine("[yellow]No manifest found in the specified path or its parent. Aborting clean.[/]");
+            ansiConsole.MarkupLine("[yellow]No manifest found in the specified path or its parent. Aborting clean.[/]");
             return 1;
         }
 
@@ -68,7 +68,7 @@ public sealed class CleanCommand : Command<CleanCommand.Settings>
 
         if (!toDeleteParents.Any())
         {
-            AnsiConsole.MarkupLine("[yellow]No build temporary directories (.cybuild) found within project scope.[/]");
+            ansiConsole.MarkupLine("[yellow]No build temporary directories (.cybuild) found within project scope.[/]");
             return 0;
         }
 
@@ -77,7 +77,7 @@ public sealed class CleanCommand : Command<CleanCommand.Settings>
             var confirmation = true;
 
             if (!settings.AgreeAll)
-                confirmation = AnsiConsole.Prompt(
+                confirmation = ansiConsole.Prompt(
                     new ConfirmationPrompt($"Delete {dir}?"));
 
             if (confirmation)
