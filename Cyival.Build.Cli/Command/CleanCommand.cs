@@ -77,8 +77,7 @@ public sealed class CleanCommand(IAnsiConsole ansiConsole) : Command<CleanComman
             var confirmation = true;
 
             if (!settings.AgreeAll)
-                confirmation = ansiConsole.Prompt(
-                    new ConfirmationPrompt($"Delete {dir}?"));
+                confirmation = ansiConsole.Confirm($"Delete {dir}?", false);
 
             if (confirmation)
                 Directory.Delete(dir, true);
