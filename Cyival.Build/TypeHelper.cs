@@ -8,7 +8,7 @@ public static class TypeHelper
     {
         // Get the type of the struct
         var type = typeof(T);
-    
+
         // Create a new instance to hold the final merged values.
         // This defaults to a copy of the baseInstance.
         var merged = baseInstance;
@@ -47,7 +47,7 @@ public static class TypeHelper
     {
         // Get the type of the struct
         var type = typeof(T);
-    
+
         // Create a new instance to hold the final merged values.
         // This defaults to a copy of the baseInstance.
         var merged = baseInstance;
@@ -82,7 +82,7 @@ public static class TypeHelper
         return merged;
     }
 
-    
+
     // Helper method to determine if a value is the default for its type
     private static bool IsDefaultValue(object? value)
     {
@@ -90,7 +90,7 @@ public static class TypeHelper
         Type valueType = value.GetType();
         return valueType.IsValueType && value.Equals(Activator.CreateInstance(valueType));
     }
-    
+
     // A more nuanced helper method to determine if a value should be considered "default" for merging purposes.
     private static bool IsConsideredDefault(object? value, Type fieldType)
     {
@@ -104,12 +104,18 @@ public static class TypeHelper
             // We return false, meaning "do not consider it default", so that any value (true or false) from the partial instance overrides the base.
             return false;
         }
-    
+
         // Special handling for bool? (Nullable<bool>)
         if (fieldType == typeof(bool?))
         {
             var nullableBool = (bool?)value;
             return !nullableBool.HasValue; // Only consider it default if it's null (unset).
+        }
+
+        if (fieldType == typeof(IEnumerable<object>))
+        {
+            var enumerable = (IEnumerable<object>)value;
+            return !enumerable.Any();
         }
 
         // For other value types, compare against the default value.

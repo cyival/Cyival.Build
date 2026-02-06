@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Cyival.Build.Plugin.Default.Build;
 
+using System.Runtime.InteropServices;
 using Configuration;
 
 public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
@@ -44,12 +45,14 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         else
         {
             _logger.LogDebug("Local Godot configuration: {}", localConfiguration);
-            configuration = TypeHelper.MergeStructs(_globalGodotConfiguration, localConfiguration);
+            // FIXME: Merging seems not working as expected.
+            configuration = TypeHelper.MergeStructsConsiderate(_globalGodotConfiguration, localConfiguration);
 
             // Force to use from local configuration
             configuration.IsGodotPack = localConfiguration.IsGodotPack;
             configuration.CopySharpArtifacts = localConfiguration.CopySharpArtifacts;
             configuration.CopyArtifactsTo = localConfiguration.CopyArtifactsTo;
+            configuration.CopyArtifactsFilter = localConfiguration.CopyArtifactsFilter;
         }
 
         _logger.LogDebug("Using godot configuration: {}", configuration);
@@ -186,9 +189,28 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
             _ => throw new NotSupportedException(),
         });
 
+        // Get Sub-Directory
+        var arch = buildSettings.TargetArchitecture switch
+        {
+            Architecture.X86 => "x86",
+            Architecture.X64 => "x64",
+            _ => throw new NotSupportedException(),
+        };
+
+        arch = buildSettings.TargetPlatform switch
+        {
+            BuildSettings.Platform.Windows => "windows",
+            BuildSettings.Platform.Linux => "linux",
+            _ => throw new NotSupportedException(),
+        } + $"-{arch}";
+
+        binPath = Path.Combine(binPath, arch);
+
         var objs = new HashSet<string>();
         foreach (var f in filters)
         {
+            _logger.LogInformation("Searching for files matching filter '{filter}' in '{path}'", f, binPath);
+            _logger.LogDebug("Result: {}", Directory.GetFiles(binPath, f));
             objs.UnionWith(Directory.GetFiles(binPath, f));
         }
 

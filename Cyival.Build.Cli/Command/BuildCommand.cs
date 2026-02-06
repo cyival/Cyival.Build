@@ -13,7 +13,7 @@ namespace Cyival.Build.Cli.Command;
 using Utils;
 
 [Description("Build a cybuild project.")]
-public sealed class BuildCommand : Command<BuildCommand.Settings>
+public sealed class BuildCommand(IAnsiConsole ansiConsole) : Command<BuildCommand.Settings>
 {
     public sealed class Settings : CommandSettings
     {
@@ -60,7 +60,7 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
                 if (!File.Exists(path))
                     throw new FileNotFoundException($"Manifest not found: {settings.Path}", settings.Path);
 
-                AnsiConsole.MarkupLine("[yellow]WARNING[/]: Instead of \"build.toml\", we are now suggesting to use \"Cybuild.toml\" as filename of the manifest.");
+                ansiConsole.MarkupLine("[yellow]WARNING[/]: Instead of \"build.toml\", we are now suggesting to use \"Cybuild.toml\" as filename of the manifest.");
             }
 
             settings.Path = path;
@@ -78,14 +78,14 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
     Path.Combine(settings.Path, "..", settings.OutPath, BuildApp.OutTempDirName)
         );
 
-    public override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    protected override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         var version = typeof(BuildApp).Assembly.GetName().Version;
-        AnsiConsole.MarkupLine($"[yellow]Cyival.Build[/] [dim]v{version}[/]\n");
+        ansiConsole.MarkupLine($"[yellow]Cyival.Build[/] [dim]v{version}[/]\n");
 
         ValidatePath(ref settings);
 
-        AnsiConsole.MarkupLine($"Building target {settings.TargetId ?? "default"} at {settings.Path}\n");
+        ansiConsole.MarkupLine($"Building target {settings.TargetId ?? "default"} at {settings.Path}\n");
 
         // Create the temp dir to ensure the log can be written.
         Directory.CreateDirectory(GetTempDir(settings));
@@ -103,24 +103,24 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
 #endif
         });
 
-        BuildApp.ConsoleRedirector = new AnsiConsoleRedirector();
+        BuildApp.ConsoleRedirector = new AnsiConsoleRedirector(ansiConsole);
 
         BuildApp.LoggerFactory.CreateLogger("Cli").LogInformation("Build started at {0}", DateTime.Now);
         var stopwatch = Stopwatch.StartNew();
 
-        AnsiConsole.Status()
+        ansiConsole.Status()
             .Start("Working...", ctx => Build(ctx, settings));
 
         stopwatch.Stop();
 
         if (_isBuildOkay)
         {
-            AnsiConsole.MarkupLine($"[green]Build completed[/] in {stopwatch.Elapsed.TotalSeconds:0.##}s.");
+            ansiConsole.MarkupLine($"[green]Build completed[/] in {stopwatch.Elapsed.TotalSeconds:0.##}s.");
 
             return 0;
         }
 
-        AnsiConsole.MarkupLine($"[red]Build failed[/] in {stopwatch.Elapsed.TotalSeconds:0.##}s.");
+        ansiConsole.MarkupLine($"[red]Build failed[/] in {stopwatch.Elapsed.TotalSeconds:0.##}s.");
 
         return -1;
 
@@ -137,7 +137,7 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
 
         using var app = new BuildApp(buildSettings);
         app.InitializePlugins();
-        AnsiConsole.Markup(":check_mark:  Initialized plugins.\n");
+        ansiConsole.Markup(":check_mark:  Initialized plugins.\n");
 
         var parser = app.CreateManifestParser("godot");
         var manifest = parser.Parse(settings.Path);
@@ -145,10 +145,10 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
         //AnsiConsole.MarkupLine(string.Join(' ', manifest.BuildTargets.Select(t => t.Id)));
         //AnsiConsole.MarkupLine(string.Join(' ', manifest.GlobalConfigurations.Select(c => c.GetType().Name)));
 
-        AnsiConsole.MarkupLine(":check_mark:  Loaded manifest.");
+        ansiConsole.MarkupLine(":check_mark:  Loaded manifest.");
 
         app.Initialize(manifest);
-        AnsiConsole.MarkupLine(":check_mark:  Initialized builder.");
+        ansiConsole.MarkupLine(":check_mark:  Initialized builder.");
 
         ctx.Status("Checking environment...");
         app.CollectItems();
@@ -163,14 +163,14 @@ public sealed class BuildCommand : Command<BuildCommand.Settings>
             if (next is not { } buildContext)
                 break;
 
-            AnsiConsole.MarkupLine($"   Building target [yellow bold]{buildContext.TargetId}[/]");
-            AnsiConsole.WriteLine(); // Use `\n` seems will cause a weird output, so I used `WriteLine()` instead.
+            ansiConsole.MarkupLine($"   Building target [yellow bold]{buildContext.TargetId}[/]");
+            ansiConsole.WriteLine(); // Use `\n` seems will cause a weird output, so I used `WriteLine()` instead.
             ctx.Status($"Building ... ({buildApp.GetCurrentIndex() + 1} of {buildApp.GetTotalTargets()})");
 
             var result = buildContext.Build();
 
-            AnsiConsole.MarkupLine($"   Successfully built [yellow bold]{buildContext.TargetId}[/]{(result == BuildResult.Warning ? " with warnings" : "")}");
-            AnsiConsole.WriteLine();
+            ansiConsole.MarkupLine($"   Successfully built [yellow bold]{buildContext.TargetId}[/]{(result == BuildResult.Warning ? " with warnings" : "")}");
+            ansiConsole.WriteLine();
         }
 
         _isBuildOkay = !buildApp.IsAnyError();

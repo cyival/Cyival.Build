@@ -49,8 +49,8 @@ public class GodotConfigurationProvider : IConfigurationProvider<GodotConfigurat
                 if (copyDllFilterObj is string cdfs)
                     copyDllFilter.Add(cdfs);
 
-                if (copyDllFilterObj is IEnumerable<string> cdfl)
-                    copyDllFilter.AddRange(cdfl);
+                if (copyDllFilterObj is IEnumerable<object> cdfl)
+                    copyDllFilter.AddRange(cdfl.Select(o => o.ToString() ?? ""));
             }
 
             if (csharpTable.TryGetValue("artifacts_output", out var copyDllDestObj))
