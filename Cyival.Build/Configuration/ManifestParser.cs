@@ -86,7 +86,7 @@ public class ManifestParser(PluginStore store, string? defaultTargetType = null)
             var dest = targetData.TryGetValue("output", out var destPathObj) ? destPathObj.ToString() :
                     targetData.TryGetValue("out", out var destPathObj2) ? destPathObj2.ToString() : string.Empty;
             var requirements = targetData.TryGetValue("requirements", out var reqObj)
-                ? ((TomlArray)reqObj).Select(r => r?.ToString() ?? string.Empty).Where(r => !string.IsNullOrEmpty(r)).ToList()
+                ? ((IEnumerable<object?>)reqObj).Select(r => r?.ToString() ?? string.Empty).Where(r => !string.IsNullOrEmpty(r)).ToList()
                 : [];
             var typeId = (targetData.TryGetValue("type", out var typeObj) ? typeObj?.ToString() : defaultTargetType)
                        ?? throw new NotSupportedException("Cannot determine target type.");
@@ -187,6 +187,7 @@ public class ManifestParser(PluginStore store, string? defaultTargetType = null)
             if (value is TomlArray array)
             {
                 dict[key] = array.ToArray();
+                continue;
             }
             dict[key] = value;
         }
