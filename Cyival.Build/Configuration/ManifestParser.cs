@@ -88,10 +88,12 @@ public class ManifestParser(PluginStore store, string? defaultTargetType = null)
             var requirements = targetData.TryGetValue("requirements", out var reqObj)
                 ? ((IEnumerable<object?>)reqObj).Select(r => r?.ToString() ?? string.Empty).Where(r => !string.IsNullOrEmpty(r)).ToList()
                 : [];
-            var typeId = (targetData.TryGetValue("type", out var typeObj) ? typeObj?.ToString() : defaultTargetType)
+            var typeId = (targetData.TryGetValue("type", out var typeObj) ? typeObj.ToString() : defaultTargetType)
                        ?? throw new NotSupportedException("Cannot determine target type.");
             var isDefault = targetData.TryGetValue("default", out var defaultObj) && defaultObj is true; // defaults to be false
-
+            var outputName = targetData.TryGetValue("output_name", out var outputNameObject) ? outputNameObject.ToString() :
+                targetData.TryGetValue("out_name", out var outputNameObject2) ? outputNameObject2.ToString() : null;
+            
             // Check for required properties
             if (string.IsNullOrWhiteSpace(id))
                 throw new NotSupportedException($"One target in manifest does not have a valid ID.");
@@ -101,14 +103,12 @@ public class ManifestParser(PluginStore store, string? defaultTargetType = null)
                              ?? throw new NotSupportedException($"Target type '{typeId}' is not registered.");
 
             // Parse target locations.
-            var tlp = _pluginStore.GetTargetLocationProviders().Values.Where(
-                p => targetData.Keys.Contains(p.KeyNameOfProvidedType) &&
-                p.CanProvide(targetData[p.KeyNameOfProvidedType])).Single();
+            var tlp = _pluginStore.GetTargetLocationProviders().Values.Single(p => targetData.ContainsKey(p.KeyNameOfProvidedType) &&
+                p.CanProvide(targetData[p.KeyNameOfProvidedType]));
             var tlObj = targetData[tlp.KeyNameOfProvidedType];
 
             var tl = tlp.Parse(tlObj, _manifestDir);
-            if (tl is null)
-                throw new ArgumentNullException();
+            ArgumentNullException.ThrowIfNull(tl);
 
             // Create target instance by using Activator
             // This should match to the class constructor of TargetBase
@@ -139,6 +139,7 @@ public class ManifestParser(PluginStore store, string? defaultTargetType = null)
                 throw new NotSupportedException($"Failed to create instance of target type '{typeId}'.");
 
             target.IsDefault = isDefault;
+            target.OutputName = outputName;
 
             // Don't forget to let the target parse itself from the table
             target.Parse(targetData);
@@ -147,7 +148,7 @@ public class ManifestParser(PluginStore store, string? defaultTargetType = null)
             var configurations = ParseConfiguration(targetData);
             configurations.ForEach(cfg => target.SetLocalConfiguration(cfg));
 
-            _logger.LogDebug($"{System.Text.Json.JsonSerializer.Serialize(tl)}");
+            _logger.LogDebug("{json}", System.Text.Json.JsonSerializer.Serialize(target));
 
             list.Add(target);
         }

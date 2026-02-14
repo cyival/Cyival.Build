@@ -88,7 +88,7 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
         // 1. provided by user
         // 2. read from export presets maybe
         // 3. use default name based on platform and target id
-        var outFileName = configuration.IsGodotPack ? $"{target.Id}.pck" : GetOutputFileName(buildSettings.TargetPlatform, target.Id);
+        var outFileName = configuration.IsGodotPack ? $"{target.OutputName!}.pck" : GetOutputFileName(buildSettings.TargetPlatform, target.OutputName!);
         var outPath = Path.Combine(buildSettings.GlobalDestinationPath, outFileName);
 
         var srcPath = target.TargetLocation.GlobalSourcePath;
@@ -261,14 +261,15 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
     private static BuildSettings.Platform ParsePlatform(string platformStr) => platformStr switch
     {
         "Windows Desktop" => BuildSettings.Platform.Windows,
-        "Linux" => BuildSettings.Platform.Linux,
-        "Linux/X11" => BuildSettings.Platform.Linux,
+        "Linux" or "Linux/X11" => BuildSettings.Platform.Linux,
         "macOS" => BuildSettings.Platform.MacOS,
         _ => throw new NotSupportedException($"Platform {platformStr} is not supported.")
     };
 
     private static string GetOutputFileName(BuildSettings.Platform platform, string baseName)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(baseName);
+        
         var extension = platform switch
         {
             BuildSettings.Platform.Windows => ".exe",

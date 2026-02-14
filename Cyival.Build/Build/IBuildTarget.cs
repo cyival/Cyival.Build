@@ -14,6 +14,8 @@ public interface IBuildTarget
 
     public ITargetLocation TargetLocation { get; }
 
+    public string? OutputName { get; set; }
+    
     public void SetLocalConfiguration<T>(T configuration);
 
     public T? GetLocalConfiguration<T>();

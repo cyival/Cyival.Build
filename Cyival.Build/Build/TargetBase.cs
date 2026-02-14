@@ -17,6 +17,9 @@ public abstract class TargetBase
     public List<string> Requirements { get; }
 
     public ITargetLocation TargetLocation { get; }
+    
+    // TODO: not specified in the interface: it's bad.
+    public string? OutputName { get => field ?? Id; set; }
 
     public TargetBase(ITargetLocation targetLocation, string dest, string id, IEnumerable<string>? requirements = null)
     {
