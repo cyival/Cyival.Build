@@ -66,7 +66,7 @@ public sealed class CleanCommand(IAnsiConsole ansiConsole) : Command<CleanComman
             }
         }
 
-        if (!toDeleteParents.Any())
+        if (toDeleteParents.Count == 0)
         {
             ansiConsole.MarkupLine("[yellow]No build temporary directories (.cybuild) found within project scope.[/]");
             return 0;

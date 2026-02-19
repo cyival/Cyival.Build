@@ -42,6 +42,5 @@ public class GodotTarget : TargetBase, IBuildTarget
     public GodotTarget(ITargetLocation tl, string dest, string id, IEnumerable<string>? requirements = null)
          : base(tl, dest, id, requirements)
     {
-
     }
 }

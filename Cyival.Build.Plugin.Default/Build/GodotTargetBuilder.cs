@@ -285,7 +285,6 @@ public class GodotTargetBuilder : ITargetBuilder<GodotTarget>
 
     public Type[] GetRequiredConfigurationTypes() => [typeof(GodotConfiguration)];
 
-
     /// <summary>
     /// Set up the builder with specified environment and global configurations.
     /// </summary>

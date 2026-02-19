@@ -1,4 +1,4 @@
-﻿using Cyival.Build.Plugin.Default.Environment;
+using Cyival.Build.Plugin.Default.Environment;
 
 namespace Cyival.Build.Tests;
 
@@ -119,5 +119,4 @@ public class GodotVersionTests
         var version = GodotVersion.Parse("4.2");
         Assert.True(version.CompareTo(null) > 0);
     }
-
 }

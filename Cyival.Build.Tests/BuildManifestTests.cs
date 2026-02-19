@@ -10,7 +10,6 @@ internal class MockBuildTarget : TargetBase, IBuildTarget
     public MockBuildTarget(string id, IEnumerable<string>? requirements = null)
          : base(null, string.Empty, id, requirements)
     {
-
     }
 
     public void SetLocalConfiguration<T>(T configuration)

@@ -53,7 +53,6 @@ public class GodotEnvProvider : IEnvironmentProvider<GodotInstance>
             {
                 _logger.LogWarning("Failed to parse godot instance at {path} caused by:\n{exception}", exePath, e);
             }
-
         }
 
         return instances;
