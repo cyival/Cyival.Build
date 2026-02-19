@@ -23,10 +23,13 @@ public class PluginStore
 
     private Dictionary<string, string> _targetTypesBinding = [];
 
-    public void ScanAndInitialize(Assembly[] assemblies)
+    public void ScanAndInitialize(IEnumerable<Assembly> assemblies)
     {
+        var asmList = assemblies.ToList();
+        _logger.LogDebug("Loading plugins from: {}", string.Join('\n', asmList));
+        
         // Select all types with PluginAttribute and inherits from Plugin class
-        var types = assemblies
+        var types = asmList
             .SelectMany(assembly => assembly.GetTypes())
             .Where(type => type.IsDefined(typeof(PluginAttribute), false) &&
                            type is { IsAbstract: false, IsInterface: false })

@@ -4,6 +4,7 @@ using Spectre.Console;
 using Spectre.Console.Cli;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using Cyival.Build.Build;
 using Karambolo.Extensions.Logging.File;
@@ -15,6 +16,8 @@ using Utils;
 [Description("Build a cybuild project.")]
 public sealed class BuildCommand(IAnsiConsole ansiConsole) : Command<BuildCommand.Settings>
 {
+    public const string PluginDirectory = "Plugins";
+    
     public sealed class Settings : CommandSettings
     {
         [CommandArgument(0, "[PATH]")]
@@ -136,7 +139,7 @@ public sealed class BuildCommand(IAnsiConsole ansiConsole) : Command<BuildComman
         };
 
         using var app = new BuildApp(buildSettings);
-        app.InitializePlugins();
+        app.InitializePlugins(FindAssemblies());
         ansiConsole.Markup(":check_mark:  Initialized plugins.\n");
 
         var parser = app.CreateManifestParser("godot");
@@ -174,5 +177,30 @@ public sealed class BuildCommand(IAnsiConsole ansiConsole) : Command<BuildComman
         }
 
         _isBuildOkay = !buildApp.IsAnyError();
+    }
+
+    private IEnumerable<Assembly> FindAssemblies()
+    {
+        string[] dirsToFind = [".", PluginDirectory];
+        HashSet<Assembly> assemblies = [];
+        
+        var execDir = AppDomain.CurrentDomain.BaseDirectory;
+        foreach (var i in dirsToFind)
+        {
+            var dir = Path.Combine(execDir, i);
+            
+            // Force to ensure directory exists
+            Directory.CreateDirectory(dir);
+
+            var files = Directory.GetFiles(dir, "*.dll")
+                .Select(AssemblyName.GetAssemblyName)
+                .Where(x => x.Name is not null && !x.Name.StartsWith("Microsoft.") && !x.Name.StartsWith("System."));
+
+            var asm = files.Select(Assembly.Load);
+            
+            assemblies.UnionWith(asm);
+        }
+
+        return assemblies;
     }
 }

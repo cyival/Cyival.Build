@@ -34,7 +34,17 @@ public sealed class BuildApp(BuildSettings settings) : IDisposable
         // TODO release managed resources here
     }
 
-    public void InitializePlugins() => _pluginStore.ScanAndInitialize(AppDomain.CurrentDomain.GetAssemblies());
+    [Obsolete("Some assemblies will not be discovered if they're not called.")]
+    // `Assembly.GetEntryAssembly().GetReferencedAssemblies()` is not useful either.
+    // According to a blog (seen here https://www.cnblogs.com/qianxingmu/p/13363193.html in chinese), the assemblies
+    // in .NET is lazy-loaded when a function that required it called. And I haven't found a way to get all
+    // assemblies (including unloaded ones) without loading or calling it. So you have to load all the plugins by
+    // yourself and pass them throughout.
+    public void InitializePlugins()
+        =>  _pluginStore.ScanAndInitialize(AppDomain.CurrentDomain.GetAssemblies());
+
+    public void InitializePlugins(IEnumerable<Assembly> assemblies) => _pluginStore.ScanAndInitialize(assemblies);
+        
 
     public void Initialize(BuildManifest manifest)
     {
