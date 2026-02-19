@@ -23,6 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Cyival.Build.Plugin.Default\Cyival.Build.Plugin.Default.csproj" />
       <ProjectReference Include="..\Cyival.Build\Cyival.Build.csproj" />
       <ProjectReference Include="..\Cyival.Build.Cli\Cyival.Build.Cli.csproj" />
     </ItemGroup>
