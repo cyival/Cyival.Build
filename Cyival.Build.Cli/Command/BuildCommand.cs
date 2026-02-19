@@ -126,7 +126,6 @@ public sealed class BuildCommand(IAnsiConsole ansiConsole) : Command<BuildComman
         ansiConsole.MarkupLine($"[red]Build failed[/] in {stopwatch.Elapsed.TotalSeconds:0.##}s.");
 
         return -1;
-
     }
 
     private void Build(StatusContext ctx, Settings settings)

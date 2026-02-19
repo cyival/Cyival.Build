@@ -36,7 +36,7 @@ public class ManifestParser(PluginStore store, string? defaultTargetType = null)
             throw new InvalidOperationException("No minimal version specified in manifest.");
 
         var curVer = GetType().Assembly.GetName().Version ?? throw new Exception("Failed to get version of assembly");
-        var curVerNum = curVer.Major + curVer.Minor * 0.1;
+        var curVerNum = curVer.Major + (curVer.Minor * 0.1);
         var minVer = (double)minimalVersionObject;
 
         if (minVer > curVerNum)

@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 
 namespace Cyival.Build;
 
@@ -81,7 +81,6 @@ public static class TypeHelper
         // Return the fully merged struct
         return merged;
     }
-
 
     // Helper method to determine if a value is the default for its type
     private static bool IsDefaultValue(object? value)

@@ -44,7 +44,6 @@ public sealed class BuildApp(BuildSettings settings) : IDisposable
         =>  _pluginStore.ScanAndInitialize(AppDomain.CurrentDomain.GetAssemblies());
 
     public void InitializePlugins(IEnumerable<Assembly> assemblies) => _pluginStore.ScanAndInitialize(assemblies);
-        
 
     public void Initialize(BuildManifest manifest)
     {
